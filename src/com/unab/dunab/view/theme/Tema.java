@@ -6,6 +6,10 @@ import java.awt.*;
 public class Tema {
     public static boolean ModoOscuro = false;
 
+    // Colores UNAB
+    public static final Color UNAB_NARANJA = new Color(233, 164, 39);
+    public static final Color UNAB_MORADO = new Color(134, 0, 221);
+
     public static Color getColorDeFondo() {
         return ModoOscuro ? new Color(30, 30, 30) : new Color(245, 245, 250);
     }
@@ -19,7 +23,7 @@ public class Tema {
     }
     
     public static Color obtenerColorCabecera() {
-        return ModoOscuro ? new Color(20, 20, 20) : new Color(33, 150, 243);
+        return ModoOscuro ? UNAB_MORADO : UNAB_NARANJA;
     }
     
     public static Color obtenerColorTextoCabecera() {
@@ -27,10 +31,23 @@ public class Tema {
     }
     
     public static Color getColorDeBoton() {
-        return ModoOscuro ? new Color(0, 122, 204) : new Color(33, 150, 243);
+        return ModoOscuro ? UNAB_MORADO : UNAB_NARANJA;
+    }
+
+    public static Color getColorDeBotonRegistro() {
+        return ModoOscuro ? UNAB_NARANJA : UNAB_MORADO;
     }
 
     public static Color obtenerColorBotonSecundario() {
         return ModoOscuro ? new Color(70, 70, 70) : new Color(230, 230, 230);
+    }
+
+    public static void aplicarEstiloBoton(JButton boton, Color colorFondo, Color colorTexto) {
+        if (boton == null) return;
+        boton.setOpaque(true);
+        boton.setContentAreaFilled(true);
+        boton.setBorderPainted(false);
+        boton.setBackground(colorFondo);
+        boton.setForeground(colorTexto);
     }
 }

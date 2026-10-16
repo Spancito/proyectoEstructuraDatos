@@ -126,9 +126,7 @@ public class RegisterFrame extends JDialog {
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
 
-        botonRegistrar.setBackground(Tema.getColorDeBoton());
-        botonRegistrar.setForeground(Color.WHITE);
-        botonCancelar.setBackground(Tema.obtenerColorBotonSecundario());
-        botonCancelar.setForeground(Tema.obtenerColorTexto());
+        Tema.aplicarEstiloBoton(botonRegistrar, Tema.getColorDeBoton(), Color.WHITE);
+        Tema.aplicarEstiloBoton(botonCancelar, Tema.obtenerColorBotonSecundario(), Tema.obtenerColorTexto());
     }
 }

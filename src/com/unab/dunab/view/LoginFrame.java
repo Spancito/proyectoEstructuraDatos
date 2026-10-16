@@ -136,14 +136,9 @@ public class LoginFrame extends JFrame {
             BorderFactory.createEmptyBorder(5, 10, 5, 10)
         ));
 
-        botonIniciarSesion.setBackground(Tema.getColorDeBoton());
-        botonIniciarSesion.setForeground(Color.WHITE);
-        
-        botonRegistrar.setBackground(Tema.obtenerColorBotonSecundario());
-        botonRegistrar.setForeground(Tema.obtenerColorTexto());
-        
-        botonAlternarTema.setBackground(Tema.obtenerColorBotonSecundario());
-        botonAlternarTema.setForeground(Tema.obtenerColorTexto());
+        Tema.aplicarEstiloBoton(botonIniciarSesion, Tema.getColorDeBoton(), Color.WHITE);
+        Tema.aplicarEstiloBoton(botonRegistrar, Tema.getColorDeBotonRegistro(), Color.WHITE);
+        Tema.aplicarEstiloBoton(botonAlternarTema, Tema.obtenerColorBotonSecundario(), Tema.obtenerColorTexto());
         
         panelFormulario.setBorder(BorderFactory.createCompoundBorder(
             new LineBorder(Tema.ModoOscuro ? new Color(60, 60, 60) : new Color(220, 220, 220), 1, true),
@@ -157,7 +152,7 @@ public class LoginFrame extends JFrame {
 
         if (controladorAutenticacion.iniciarSesion(usuarioTexto, contrasenaTexto)) {
             JOptionPane.showMessageDialog(this, 
-                "¡Bienvenido de nuevo, " + usuarioTexto + "!", 
+                "¡Bienvenido, " + usuarioTexto + "!", 
                 "Acceso Concedido", 
                 JOptionPane.INFORMATION_MESSAGE);
         } else {
