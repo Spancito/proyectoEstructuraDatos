@@ -43,7 +43,6 @@ public class LoginFrame extends JFrame {
         panelPrincipal = new JPanel(new GridLayout(1, 2));
         panelPrincipal.setBackground(Tema.getColorDeFondo());
 
-        // Lado izquierdo: presentación
         panelIzquierdo = new JPanel(new GridBagLayout());
         panelIzquierdo.setOpaque(true);
         panelIzquierdo.setBackground(new Color(48, 32, 82));
@@ -85,7 +84,6 @@ public class LoginFrame extends JFrame {
         gbcIzq.anchor = GridBagConstraints.CENTER;
         panelIzquierdo.add(panelContenidoIzquierda, gbcIzq);
 
-        // Lado derecho: formulario (Todo perfectamente CENTRADO)
         panelDerecho = new JPanel(new GridBagLayout());
         panelDerecho.setOpaque(true);
         panelDerecho.setBackground(Tema.getColorDeFondo());
@@ -93,10 +91,13 @@ public class LoginFrame extends JFrame {
         formulario = new JPanel();
         formulario.setLayout(new BoxLayout(formulario, BoxLayout.Y_AXIS));
         formulario.setBackground(Tema.obtenerColorPanel());
-        formulario.setBorder(new EmptyBorder(30, 40, 30, 40));
-        formulario.setPreferredSize(new Dimension(410, 520));
+        formulario.setBorder(new EmptyBorder(15, 35, 15, 35));
+        formulario.setPreferredSize(new Dimension(420, 470));
 
-        // Botón de alternar tema alineado a la derecha arriba del formulario
+        JPanel contenedorBotonTema = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        contenedorBotonTema.setOpaque(false);
+        contenedorBotonTema.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         botonAlternarTema = new JButton(Tema.ModoOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro");
         botonAlternarTema.setFont(new Font("Arial", Font.BOLD, 12));
         botonAlternarTema.setForeground(Tema.MORADO);
@@ -104,102 +105,100 @@ public class LoginFrame extends JFrame {
         botonAlternarTema.setFocusPainted(false);
         botonAlternarTema.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Tema.MORADO, 1, true),
-            new EmptyBorder(6, 12, 6, 12)
+            new EmptyBorder(4, 8, 4, 8)
         ));
         botonAlternarTema.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botonAlternarTema.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        botonAlternarTema.setMaximumSize(new Dimension(140, 34));
+        botonAlternarTema.setPreferredSize(new Dimension(130, 28));
         botonAlternarTema.addActionListener(e -> alternarTema());
 
+        contenedorBotonTema.add(botonAlternarTema);
+
         titulo = new JLabel("¡Bienvenido!");
-        titulo.setFont(new Font("Arial", Font.BOLD, 32));
+        titulo.setFont(new Font("Arial", Font.BOLD, 26));
         titulo.setForeground(Tema.MORADO);
         titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         texto = new JLabel("Inicia sesión en tu cuenta");
-        texto.setFont(new Font("Arial", Font.PLAIN, 14));
+        texto.setFont(new Font("Arial", Font.PLAIN, 12));
         texto.setForeground(Color.GRAY);
         texto.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         etiquetaUsuario = new JLabel("Usuario");
-        etiquetaUsuario.setFont(new Font("Arial", Font.BOLD, 14));
+        etiquetaUsuario.setFont(new Font("Arial", Font.BOLD, 12));
         etiquetaUsuario.setForeground(Tema.obtenerColorTexto());
         etiquetaUsuario.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         campoUsuario = new JTextField();
-        campoUsuario.setFont(new Font("Arial", Font.PLAIN, 15));
-        campoUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        campoUsuario.setFont(new Font("Arial", Font.PLAIN, 14));
+        campoUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         campoUsuario.setAlignmentX(Component.CENTER_ALIGNMENT);
         campoUsuario.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Tema.GRIS),
-            new EmptyBorder(8, 12, 8, 12)
+            new EmptyBorder(4, 8, 4, 8)
         ));
 
         etiquetaContrasena = new JLabel("Contraseña");
-        etiquetaContrasena.setFont(new Font("Arial", Font.BOLD, 14));
+        etiquetaContrasena.setFont(new Font("Arial", Font.BOLD, 12));
         etiquetaContrasena.setForeground(Tema.obtenerColorTexto());
         etiquetaContrasena.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         campoContrasena = new JPasswordField();
-        campoContrasena.setFont(new Font("Arial", Font.PLAIN, 15));
-        campoContrasena.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        campoContrasena.setFont(new Font("Arial", Font.PLAIN, 14));
+        campoContrasena.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
         campoContrasena.setAlignmentX(Component.CENTER_ALIGNMENT);
         campoContrasena.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(Tema.GRIS),
-            new EmptyBorder(8, 12, 8, 12)
+            new EmptyBorder(4, 8, 4, 8)
         ));
 
         botonIngresar = new JButton("Iniciar sesión");
-        botonIngresar.setFont(new Font("Arial", Font.BOLD, 16));
+        botonIngresar.setFont(new Font("Arial", Font.BOLD, 14));
         botonIngresar.setBackground(Tema.NARANJA);
         botonIngresar.setForeground(Color.WHITE);
         botonIngresar.setFocusPainted(false);
         botonIngresar.setCursor(new Cursor(Cursor.HAND_CURSOR));
         botonIngresar.setAlignmentX(Component.CENTER_ALIGNMENT);
-        botonIngresar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        botonIngresar.setPreferredSize(new Dimension(0, 50));
-
+        botonIngresar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+        botonIngresar.setPreferredSize(new Dimension(0, 38));
         botonIngresar.addActionListener(e -> iniciarSesion());
 
         preguntaRegistro = new JLabel("¿Todavía no tienes una cuenta?");
-        preguntaRegistro.setFont(new Font("Arial", Font.PLAIN, 13));
+        preguntaRegistro.setFont(new Font("Arial", Font.PLAIN, 11));
         preguntaRegistro.setForeground(Color.GRAY);
         preguntaRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         botonRegistro = new JButton("Crear una cuenta");
-        botonRegistro.setFont(new Font("Arial", Font.BOLD, 14));
+        botonRegistro.setFont(new Font("Arial", Font.BOLD, 12));
         botonRegistro.setForeground(Tema.MORADO);
         botonRegistro.setBackground(Tema.obtenerColorPanel());
         botonRegistro.setBorderPainted(false);
         botonRegistro.setFocusPainted(false);
         botonRegistro.setCursor(new Cursor(Cursor.HAND_CURSOR));
         botonRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         botonRegistro.addActionListener(e -> abrirRegistro());
 
-        // Ensamblar formulario de manera armónica
-        formulario.add(botonAlternarTema);
-        formulario.add(Box.createVerticalStrut(10));
+        formulario.add(contenedorBotonTema);
+        formulario.add(Box.createVerticalStrut(6));
         formulario.add(titulo);
-        formulario.add(Box.createVerticalStrut(5));
+        formulario.add(Box.createVerticalStrut(2));
         formulario.add(texto);
-        formulario.add(Box.createVerticalStrut(20));
+        formulario.add(Box.createVerticalStrut(10));
 
         formulario.add(etiquetaUsuario);
-        formulario.add(Box.createVerticalStrut(6));
+        formulario.add(Box.createVerticalStrut(2));
         formulario.add(campoUsuario);
-        formulario.add(Box.createVerticalStrut(15));
+        formulario.add(Box.createVerticalStrut(8));
 
         formulario.add(etiquetaContrasena);
-        formulario.add(Box.createVerticalStrut(6));
+        formulario.add(Box.createVerticalStrut(2));
         formulario.add(campoContrasena);
-        formulario.add(Box.createVerticalStrut(25));
+        formulario.add(Box.createVerticalStrut(12));
 
         formulario.add(botonIngresar);
-        formulario.add(Box.createVerticalStrut(18));
+        formulario.add(Box.createVerticalStrut(8));
 
         formulario.add(preguntaRegistro);
-        formulario.add(Box.createVerticalStrut(5));
+        formulario.add(Box.createVerticalStrut(2));
         formulario.add(botonRegistro);
 
         GridBagConstraints gbcDer = new GridBagConstraints();
@@ -255,7 +254,6 @@ public class LoginFrame extends JFrame {
             return;
         }
 
-        // Si quieres forzar la entrada para probar el dashboard, cambia temporalmente por: (true || controladorAutenticacion.iniciarSesion(...))
         if (controladorAutenticacion.iniciarSesion(usuarioTexto, contrasenaTexto)) {
             JOptionPane.showMessageDialog(
                 this,
