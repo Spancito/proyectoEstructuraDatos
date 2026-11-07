@@ -9,25 +9,52 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class TransaccionDAO {
-    private static final String RUTA_ARCHIVO = "data/transacciones.csv";
+    private File archivoDatos;
     private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
     private Map<String, Transaccion> baseDatosTransacciones;
 
     public TransaccionDAO() {
         this.baseDatosTransacciones = new LinkedHashMap<>();
+        this.archivoDatos = resolverArchivoDatos("transacciones.csv");
         asegurarDirectorioYArchivo();
         cargarDesdeArchivo();
     }
 
+    private File resolverArchivoDatos(String nombreArchivo) {
+        File f1 = new File("data", nombreArchivo);
+        if (f1.exists()) {
+            return f1;
+        }
+        File f2 = new File("../../../data", nombreArchivo);
+        if (f2.exists()) {
+            return f2;
+        }
+        File f3 = new File("../../data", nombreArchivo);
+        if (f3.exists()) {
+            return f3;
+        }
+        File dirActual = new File(".").getAbsoluteFile();
+        while (dirActual != null) {
+            File carpetaData = new File(dirActual, "data");
+            if (carpetaData.exists() && carpetaData.isDirectory()) {
+                File candidato = new File(carpetaData, nombreArchivo);
+                if (candidato.exists()) {
+                    return candidato;
+                }
+            }
+            dirActual = dirActual.getParentFile();
+        }
+        return f1;
+    }
+
     private void asegurarDirectorioYArchivo() {
         try {
-            File carpeta = new File("data");
-            if (!carpeta.exists()) {
+            File carpeta = archivoDatos.getParentFile();
+            if (carpeta != null && !carpeta.exists()) {
                 carpeta.mkdirs();
             }
-            File archivo = new File(RUTA_ARCHIVO);
-            if (!archivo.exists()) {
-                archivo.createNewFile();
+            if (!archivoDatos.exists()) {
+                archivoDatos.createNewFile();
             }
         } catch (IOException e) {
             System.err.println("Error al inicializar almacenamiento de transacciones: " + e.getMessage());
@@ -35,12 +62,11 @@ public class TransaccionDAO {
     }
 
     private synchronized void cargarDesdeArchivo() {
-        File archivo = new File(RUTA_ARCHIVO);
-        if (!archivo.exists() || archivo.length() == 0) {
+        if (!archivoDatos.exists() || archivoDatos.length() == 0) {
             return;
         }
 
-        try (BufferedReader lector = new BufferedReader(new InputStreamReader(new FileInputStream(archivo), StandardCharsets.UTF_8))) {
+        try (BufferedReader lector = new BufferedReader(new InputStreamReader(new FileInputStream(archivoDatos), StandardCharsets.UTF_8))) {
             String linea;
             while ((linea = lector.readLine()) != null) {
                 linea = linea.trim();
@@ -58,8 +84,7 @@ public class TransaccionDAO {
     }
 
     private synchronized void sincronizarArchivo() {
-        File archivo = new File(RUTA_ARCHIVO);
-        try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivo), StandardCharsets.UTF_8))) {
+        try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivoDatos), StandardCharsets.UTF_8))) {
             for (Transaccion t : baseDatosTransacciones.values()) {
                 escritor.write(serializarTransaccion(t));
                 escritor.newLine();
@@ -163,11 +188,9 @@ public class TransaccionDAO {
         return resultado;
     }
 
-    // ultimas 20 transacciones
     public synchronized List<Transaccion> obtenerUltimos20Movimientos(String usuarioId) {
         List<Transaccion> movimientos = listarPorUsuario(usuarioId);
         
-        // Ordenar reciente primero -> antigua despues
         movimientos.sort((t1, t2) -> {
             if (t1.getFechaHora() == null && t2.getFechaHora() == null) return 0;
             if (t1.getFechaHora() == null) return 1;

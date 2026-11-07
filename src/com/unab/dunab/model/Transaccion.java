@@ -10,11 +10,11 @@ public class Transaccion implements Serializable {
     private String id;
     private String usuarioId;
     private double monto;
-    private String tipo; // "INGRESO" o "GASTO"
+    private String tipo;
     private String categoria;
     private String descripcion;
     private LocalDateTime fechaHora;
-    private int semestreIndex; // Rango: 1 a 4
+    private int semestreIndex;
 
     public Transaccion() {
         this.id = UUID.randomUUID().toString();

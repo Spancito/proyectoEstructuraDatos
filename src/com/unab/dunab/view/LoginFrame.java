@@ -30,52 +30,59 @@ public class LoginFrame extends JFrame {
         this.controladorAutenticacion = controlador;
 
         setTitle("DUNAB - Iniciar sesión");
-        setSize(950, 600);
-        setMinimumSize(new Dimension(800, 500));
+        setSize(960, 620);
+        setMinimumSize(new Dimension(860, 560));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
         crearInterfaz();
+        actualizarColores();
     }
 
     private void crearInterfaz() {
         panelPrincipal = new JPanel(new GridLayout(1, 2));
-        panelPrincipal.setBackground(Tema.getColorDeFondo());
 
         panelIzquierdo = new JPanel(new GridBagLayout());
         panelIzquierdo.setOpaque(true);
-        panelIzquierdo.setBackground(new Color(48, 32, 82));
+        panelIzquierdo.setBackground(Tema.MORADO_UNAB);
 
         JPanel panelContenidoIzquierda = new JPanel();
         panelContenidoIzquierda.setLayout(new BoxLayout(panelContenidoIzquierda, BoxLayout.Y_AXIS));
         panelContenidoIzquierda.setOpaque(false);
 
+        JLabel etiquetaBadge = new JLabel("UNIVERSIDAD AUTÓNOMA DE BUCARAMANGA");
+        etiquetaBadge.setFont(new Font("SansSerif", Font.BOLD, 10));
+        etiquetaBadge.setForeground(Tema.NARANJA_UNAB);
+        etiquetaBadge.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         JLabel tituloLogo = new JLabel("DUNAB");
-        tituloLogo.setFont(new Font("Arial", Font.BOLD, 46));
+        tituloLogo.setFont(new Font("SansSerif", Font.BOLD, 52));
         tituloLogo.setForeground(Color.WHITE);
         tituloLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel subtitulo = new JLabel("Tu espacio universitario");
-        subtitulo.setFont(new Font("Arial", Font.PLAIN, 18));
-        subtitulo.setForeground(Color.WHITE);
+        JLabel subtitulo = new JLabel("Gestión Financiera Universitaria");
+        subtitulo.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        subtitulo.setForeground(new Color(230, 220, 240));
         subtitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel descripcion = new JLabel(
             "<html><div style='text-align:center;'>"
-            + "Organiza tu experiencia universitaria<br>"
-            + "y administra tu información desde<br>"
-            + "un solo lugar."
+            + "Organiza tu presupuesto, controla<br>"
+            + "tus materias y alcanza tus metas de<br>"
+            + "ahorro desde un solo lugar."
             + "</div></html>"
         );
-        descripcion.setFont(new Font("Arial", Font.PLAIN, 15));
-        descripcion.setForeground(new Color(230, 225, 240));
+        descripcion.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        descripcion.setForeground(new Color(210, 200, 225));
         descripcion.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        panelContenidoIzquierda.add(etiquetaBadge);
+        panelContenidoIzquierda.add(Box.createVerticalStrut(10));
         panelContenidoIzquierda.add(tituloLogo);
-        panelContenidoIzquierda.add(Box.createVerticalStrut(15));
+        panelContenidoIzquierda.add(Box.createVerticalStrut(8));
         panelContenidoIzquierda.add(subtitulo);
-        panelContenidoIzquierda.add(Box.createVerticalStrut(30));
+        panelContenidoIzquierda.add(Box.createVerticalStrut(25));
         panelContenidoIzquierda.add(descripcion);
 
         GridBagConstraints gbcIzq = new GridBagConstraints();
@@ -86,120 +93,88 @@ public class LoginFrame extends JFrame {
 
         panelDerecho = new JPanel(new GridBagLayout());
         panelDerecho.setOpaque(true);
-        panelDerecho.setBackground(Tema.getColorDeFondo());
 
-        formulario = new JPanel();
-        formulario.setLayout(new BoxLayout(formulario, BoxLayout.Y_AXIS));
-        formulario.setBackground(Tema.obtenerColorPanel());
-        formulario.setBorder(new EmptyBorder(15, 35, 15, 35));
-        formulario.setPreferredSize(new Dimension(420, 470));
+        formulario = new JPanel(new GridBagLayout());
+        formulario.setOpaque(true);
+        formulario.setPreferredSize(new Dimension(380, 500));
 
-        JPanel contenedorBotonTema = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        contenedorBotonTema.setOpaque(false);
-        contenedorBotonTema.setAlignmentX(Component.CENTER_ALIGNMENT);
+        GridBagConstraints gbcForm = new GridBagConstraints();
+        gbcForm.gridx = 0;
+        gbcForm.gridy = 0;
+        gbcForm.weightx = 1.0;
+        gbcForm.fill = GridBagConstraints.HORIZONTAL;
+        gbcForm.anchor = GridBagConstraints.CENTER;
+        gbcForm.insets = new Insets(0, 0, 4, 0);
 
-        botonAlternarTema = new JButton(Tema.ModoOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro");
-        botonAlternarTema.setFont(new Font("Arial", Font.BOLD, 12));
-        botonAlternarTema.setForeground(Tema.MORADO);
-        botonAlternarTema.setBackground(Tema.ModoOscuro ? new Color(60, 60, 60) : new Color(240, 235, 250));
-        botonAlternarTema.setFocusPainted(false);
-        botonAlternarTema.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Tema.MORADO, 1, true),
-            new EmptyBorder(4, 8, 4, 8)
-        ));
-        botonAlternarTema.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botonAlternarTema.setPreferredSize(new Dimension(130, 28));
-        botonAlternarTema.addActionListener(e -> alternarTema());
+        titulo = new JLabel("¡Bienvenido!", SwingConstants.CENTER);
+        titulo.setFont(new Font("SansSerif", Font.BOLD, 28));
+        formulario.add(titulo, gbcForm);
 
-        contenedorBotonTema.add(botonAlternarTema);
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 20, 0);
+        texto = new JLabel("Ingresa tus credenciales para continuar", SwingConstants.CENTER);
+        texto.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        formulario.add(texto, gbcForm);
 
-        titulo = new JLabel("¡Bienvenido!");
-        titulo.setFont(new Font("Arial", Font.BOLD, 26));
-        titulo.setForeground(Tema.MORADO);
-        titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        texto = new JLabel("Inicia sesión en tu cuenta");
-        texto.setFont(new Font("Arial", Font.PLAIN, 12));
-        texto.setForeground(Color.GRAY);
-        texto.setAlignmentX(Component.CENTER_ALIGNMENT);
-
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 4, 0);
         etiquetaUsuario = new JLabel("Usuario");
-        etiquetaUsuario.setFont(new Font("Arial", Font.BOLD, 12));
-        etiquetaUsuario.setForeground(Tema.obtenerColorTexto());
-        etiquetaUsuario.setAlignmentX(Component.LEFT_ALIGNMENT);
+        etiquetaUsuario.setFont(new Font("SansSerif", Font.BOLD, 12));
+        formulario.add(etiquetaUsuario, gbcForm);
 
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 14, 0);
         campoUsuario = new JTextField();
-        campoUsuario.setFont(new Font("Arial", Font.PLAIN, 14));
-        campoUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-        campoUsuario.setAlignmentX(Component.CENTER_ALIGNMENT);
-        campoUsuario.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Tema.GRIS),
-            new EmptyBorder(4, 8, 4, 8)
-        ));
+        campoUsuario.setPreferredSize(new Dimension(310, 38));
+        formulario.add(campoUsuario, gbcForm);
 
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 4, 0);
         etiquetaContrasena = new JLabel("Contraseña");
-        etiquetaContrasena.setFont(new Font("Arial", Font.BOLD, 12));
-        etiquetaContrasena.setForeground(Tema.obtenerColorTexto());
-        etiquetaContrasena.setAlignmentX(Component.LEFT_ALIGNMENT);
+        etiquetaContrasena.setFont(new Font("SansSerif", Font.BOLD, 12));
+        formulario.add(etiquetaContrasena, gbcForm);
 
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 22, 0);
         campoContrasena = new JPasswordField();
-        campoContrasena.setFont(new Font("Arial", Font.PLAIN, 14));
-        campoContrasena.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
-        campoContrasena.setAlignmentX(Component.CENTER_ALIGNMENT);
-        campoContrasena.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Tema.GRIS),
-            new EmptyBorder(4, 8, 4, 8)
-        ));
+        campoContrasena.setPreferredSize(new Dimension(310, 38));
+        formulario.add(campoContrasena, gbcForm);
 
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 14, 0);
         botonIngresar = new JButton("Iniciar sesión");
-        botonIngresar.setFont(new Font("Arial", Font.BOLD, 14));
-        botonIngresar.setBackground(Tema.NARANJA);
-        botonIngresar.setForeground(Color.WHITE);
-        botonIngresar.setFocusPainted(false);
-        botonIngresar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botonIngresar.setAlignmentX(Component.CENTER_ALIGNMENT);
-        botonIngresar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        botonIngresar.setPreferredSize(new Dimension(0, 38));
+        botonIngresar.setPreferredSize(new Dimension(310, 42));
         botonIngresar.addActionListener(e -> iniciarSesion());
+        formulario.add(botonIngresar, gbcForm);
 
-        preguntaRegistro = new JLabel("¿Todavía no tienes una cuenta?");
-        preguntaRegistro.setFont(new Font("Arial", Font.PLAIN, 11));
-        preguntaRegistro.setForeground(Color.GRAY);
-        preguntaRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 4, 0);
+        preguntaRegistro = new JLabel("¿Todavía no tienes una cuenta?", SwingConstants.CENTER);
+        preguntaRegistro.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        formulario.add(preguntaRegistro, gbcForm);
 
-        botonRegistro = new JButton("Crear una cuenta");
-        botonRegistro.setFont(new Font("Arial", Font.BOLD, 12));
-        botonRegistro.setForeground(Tema.MORADO);
-        botonRegistro.setBackground(Tema.obtenerColorPanel());
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 24, 0);
+        botonRegistro = new JButton("Crear una cuenta nueva");
+        botonRegistro.setFont(new Font("SansSerif", Font.BOLD, 12));
         botonRegistro.setBorderPainted(false);
         botonRegistro.setFocusPainted(false);
+        botonRegistro.setContentAreaFilled(false);
+        botonRegistro.setOpaque(false);
         botonRegistro.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botonRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
         botonRegistro.addActionListener(e -> abrirRegistro());
+        formulario.add(botonRegistro, gbcForm);
 
-        formulario.add(contenedorBotonTema);
-        formulario.add(Box.createVerticalStrut(6));
-        formulario.add(titulo);
-        formulario.add(Box.createVerticalStrut(2));
-        formulario.add(texto);
-        formulario.add(Box.createVerticalStrut(10));
-
-        formulario.add(etiquetaUsuario);
-        formulario.add(Box.createVerticalStrut(2));
-        formulario.add(campoUsuario);
-        formulario.add(Box.createVerticalStrut(8));
-
-        formulario.add(etiquetaContrasena);
-        formulario.add(Box.createVerticalStrut(2));
-        formulario.add(campoContrasena);
-        formulario.add(Box.createVerticalStrut(12));
-
-        formulario.add(botonIngresar);
-        formulario.add(Box.createVerticalStrut(8));
-
-        formulario.add(preguntaRegistro);
-        formulario.add(Box.createVerticalStrut(2));
-        formulario.add(botonRegistro);
+        gbcForm.gridy++;
+        gbcForm.insets = new Insets(0, 0, 0, 0);
+        gbcForm.fill = GridBagConstraints.NONE;
+        botonAlternarTema = new JButton();
+        botonAlternarTema.setFont(new Font("SansSerif", Font.BOLD, 12));
+        botonAlternarTema.setFocusPainted(false);
+        botonAlternarTema.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botonAlternarTema.setPreferredSize(new Dimension(150, 32));
+        botonAlternarTema.addActionListener(e -> alternarTema());
+        formulario.add(botonAlternarTema, gbcForm);
 
         GridBagConstraints gbcDer = new GridBagConstraints();
         gbcDer.gridx = 0;
@@ -217,26 +192,43 @@ public class LoginFrame extends JFrame {
 
     private void alternarTema() {
         Tema.ModoOscuro = !Tema.ModoOscuro;
-        actualizarEstilosTema();
         actualizarColores();
-    }
-
-    private void actualizarEstilosTema() {
-        botonAlternarTema.setText(Tema.ModoOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro");
-        botonAlternarTema.setBackground(Tema.ModoOscuro ? new Color(60, 60, 60) : new Color(240, 235, 250));
-        botonAlternarTema.setForeground(Tema.ModoOscuro ? Color.WHITE : Tema.MORADO);
     }
 
     private void actualizarColores() {
         panelPrincipal.setBackground(Tema.getColorDeFondo());
         panelDerecho.setBackground(Tema.getColorDeFondo());
+
         formulario.setBackground(Tema.obtenerColorPanel());
-        
+        formulario.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Tema.obtenerColorBorde(), 1, true),
+            new EmptyBorder(25, 30, 25, 30)
+        ));
+
+        titulo.setForeground(Tema.ModoOscuro ? Color.WHITE : Tema.MORADO_UNAB);
+        texto.setForeground(Tema.obtenerColorTextoSecundario());
+
         etiquetaUsuario.setForeground(Tema.obtenerColorTexto());
         etiquetaContrasena.setForeground(Tema.obtenerColorTexto());
-        
-        botonRegistro.setBackground(Tema.obtenerColorPanel());
-        
+        preguntaRegistro.setForeground(Tema.obtenerColorTextoSecundario());
+
+        Tema.aplicarEstiloInput(campoUsuario);
+        Tema.aplicarEstiloInput(campoContrasena);
+
+        Color colorBoton = Tema.obtenerColorBotonLogin();
+        Color colorBotonHover = Tema.obtenerColorBotonLoginHover();
+        Tema.aplicarEstiloBotonPrimario(botonIngresar, colorBoton, colorBotonHover);
+
+        botonRegistro.setForeground(Tema.NARANJA_UNAB);
+
+        botonAlternarTema.setText(Tema.ModoOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro");
+        botonAlternarTema.setBackground(Tema.obtenerColorPanel());
+        botonAlternarTema.setForeground(Tema.obtenerColorTexto());
+        botonAlternarTema.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Tema.obtenerColorBorde(), 1, true),
+            new EmptyBorder(4, 10, 4, 10)
+        ));
+
         SwingUtilities.updateComponentTreeUI(this);
     }
 
@@ -263,11 +255,13 @@ public class LoginFrame extends JFrame {
             );
 
             try {
-                DashboardFrame dashboard = new DashboardFrame(usuarioTexto);
+                String usuarioSesion = (controladorAutenticacion.getUsuarioActual() != null && controladorAutenticacion.getUsuarioActual().getUsuario() != null)
+                        ? controladorAutenticacion.getUsuarioActual().getUsuario()
+                        : usuarioTexto;
+                DashboardFrame dashboard = new DashboardFrame(usuarioSesion);
                 dashboard.setVisible(true);
                 this.dispose();
             } catch (Exception ex) {
-                ex.printStackTrace();
                 JOptionPane.showMessageDialog(
                     this,
                     "Error al abrir el Dashboard:\n" + ex.getMessage(),

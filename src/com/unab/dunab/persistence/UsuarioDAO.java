@@ -7,24 +7,51 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class UsuarioDAO {
-    private static final String RUTA_ARCHIVO = "data/usuarios.csv";
+    private File archivoDatos;
     private Map<String, Usuario> baseDatosUsuarios;
 
     public UsuarioDAO() {
         this.baseDatosUsuarios = new LinkedHashMap<>();
+        this.archivoDatos = resolverArchivoDatos("usuarios.csv");
         asegurarDirectorioYArchivo();
         cargarDesdeArchivo();
     }
 
+    private File resolverArchivoDatos(String nombreArchivo) {
+        File f1 = new File("data", nombreArchivo);
+        if (f1.exists()) {
+            return f1;
+        }
+        File f2 = new File("../../../data", nombreArchivo);
+        if (f2.exists()) {
+            return f2;
+        }
+        File f3 = new File("../../data", nombreArchivo);
+        if (f3.exists()) {
+            return f3;
+        }
+        File dirActual = new File(".").getAbsoluteFile();
+        while (dirActual != null) {
+            File carpetaData = new File(dirActual, "data");
+            if (carpetaData.exists() && carpetaData.isDirectory()) {
+                File candidato = new File(carpetaData, nombreArchivo);
+                if (candidato.exists()) {
+                    return candidato;
+                }
+            }
+            dirActual = dirActual.getParentFile();
+        }
+        return f1;
+    }
+
     private void asegurarDirectorioYArchivo() {
         try {
-            File carpeta = new File("data");
-            if (!carpeta.exists()) {
+            File carpeta = archivoDatos.getParentFile();
+            if (carpeta != null && !carpeta.exists()) {
                 carpeta.mkdirs();
             }
-            File archivo = new File(RUTA_ARCHIVO);
-            if (!archivo.exists()) {
-                archivo.createNewFile();
+            if (!archivoDatos.exists()) {
+                archivoDatos.createNewFile();
             }
         } catch (IOException e) {
             System.err.println("Error al inicializar almacenamiento de usuarios: " + e.getMessage());
@@ -32,12 +59,11 @@ public class UsuarioDAO {
     }
 
     private synchronized void cargarDesdeArchivo() {
-        File archivo = new File(RUTA_ARCHIVO);
-        if (!archivo.exists() || archivo.length() == 0) {
+        if (!archivoDatos.exists() || archivoDatos.length() == 0) {
             return;
         }
 
-        try (BufferedReader lector = new BufferedReader(new InputStreamReader(new FileInputStream(archivo), StandardCharsets.UTF_8))) {
+        try (BufferedReader lector = new BufferedReader(new InputStreamReader(new FileInputStream(archivoDatos), StandardCharsets.UTF_8))) {
             String linea;
             while ((linea = lector.readLine()) != null) {
                 linea = linea.trim();
@@ -55,8 +81,7 @@ public class UsuarioDAO {
     }
 
     private synchronized void sincronizarArchivo() {
-        File archivo = new File(RUTA_ARCHIVO);
-        try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivo), StandardCharsets.UTF_8))) {
+        try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivoDatos), StandardCharsets.UTF_8))) {
             for (Usuario u : baseDatosUsuarios.values()) {
                 escritor.write(serializarUsuario(u));
                 escritor.newLine();
@@ -67,7 +92,6 @@ public class UsuarioDAO {
     }
 
     private String serializarUsuario(Usuario u) {
-        // Formato CSV
         return escapar(u.getId()) + "," +
                 escapar(u.getUsuario()) + "," +
                 escapar(u.getContrasena()) + "," +
@@ -114,7 +138,7 @@ public class UsuarioDAO {
             return false;
         }
         if (baseDatosUsuarios.containsKey(usuario.getUsuario())) {
-            return false; // Ya existe
+            return false;
         }
         baseDatosUsuarios.put(usuario.getUsuario(), usuario);
         sincronizarArchivo();
@@ -130,9 +154,22 @@ public class UsuarioDAO {
         return true;
     }
 
-    public synchronized Usuario buscar(String nombreUsuario) {
-        if (nombreUsuario == null) return null;
-        return baseDatosUsuarios.get(nombreUsuario);
+    public synchronized Usuario buscar(String identificador) {
+        if (identificador == null) return null;
+        String idLimpio = identificador.trim();
+        Usuario directo = baseDatosUsuarios.get(idLimpio);
+        if (directo != null) {
+            return directo;
+        }
+        for (Usuario u : baseDatosUsuarios.values()) {
+            if (u.getUsuario() != null && u.getUsuario().equalsIgnoreCase(idLimpio)) {
+                return u;
+            }
+            if (u.getCorreo() != null && u.getCorreo().equalsIgnoreCase(idLimpio)) {
+                return u;
+            }
+        }
+        return null;
     }
 
     public synchronized Usuario buscarPorId(String id) {

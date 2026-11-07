@@ -8,27 +8,49 @@ import java.util.UUID;
 public class Autenticacion {
 
     private UsuarioDAO usuarioDAO;
+    private Usuario usuarioActual;
 
     public Autenticacion() {
         this.usuarioDAO = new UsuarioDAO();
     }
 
-    public boolean iniciarSesion(String usuario, String contrasena) {
-        if (usuario == null || contrasena == null || usuario.isEmpty() || contrasena.isEmpty()) {
-            return false;
-        }
-        Usuario u = usuarioDAO.buscar(usuario);
-        return u != null && u.getContrasena().equals(contrasena);
+    public Autenticacion(UsuarioDAO usuarioDAO) {
+        this.usuarioDAO = usuarioDAO;
     }
 
-    public boolean registrarUsuario(String usuario, String contrasena) {
-        if (usuario == null || contrasena == null || usuario.isEmpty() || contrasena.isEmpty()) {
+    public boolean iniciarSesion(String nombreUsuario, String contrasena) {
+        if (nombreUsuario == null || contrasena == null || nombreUsuario.trim().isEmpty() || contrasena.trim().isEmpty()) {
             return false;
         }
-        
+        Usuario u = usuarioDAO.buscar(nombreUsuario.trim());
+        if (u != null && contrasena.equals(u.getContrasena())) {
+            this.usuarioActual = u;
+            return true;
+        }
+        return false;
+    }
+
+    public boolean registrarUsuario(String nombreUsuario, String contrasena) {
+        if (nombreUsuario == null || contrasena == null || nombreUsuario.trim().isEmpty() || contrasena.trim().isEmpty()) {
+            return false;
+        }
+
         String id = UUID.randomUUID().toString();
-        Usuario nuevoUsuario = new Usuario(id, usuario, contrasena, "", "", "", 0.0);
-        
+        Usuario nuevoUsuario = new Usuario(id, nombreUsuario.trim(), contrasena, nombreUsuario.trim(), "", "", 0.0);
+
         return usuarioDAO.guardar(nuevoUsuario);
+    }
+
+    public Usuario getUsuarioActual() {
+        return usuarioActual;
+    }
+
+    public Usuario obtenerUsuarioPorNombre(String nombreUsuario) {
+        if (nombreUsuario == null) return null;
+        return usuarioDAO.buscar(nombreUsuario);
+    }
+
+    public void cerrarSesion() {
+        this.usuarioActual = null;
     }
 }

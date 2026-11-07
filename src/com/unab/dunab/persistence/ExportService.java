@@ -1,6 +1,7 @@
 package com.unab.dunab.persistence;
 
 import com.unab.dunab.model.Materia;
+import com.unab.dunab.model.MetaAhorro;
 import com.unab.dunab.model.Transaccion;
 import com.unab.dunab.model.Usuario;
 
@@ -14,20 +15,23 @@ public class ExportService {
     private UsuarioDAO usuarioDAO;
     private TransaccionDAO transaccionDAO;
     private MateriaDAO materiaDAO;
+    private MetaAhorroDAO metaAhorroDAO;
 
     public ExportService() {
         this.usuarioDAO = new UsuarioDAO();
         this.transaccionDAO = new TransaccionDAO();
         this.materiaDAO = new MateriaDAO();
+        this.metaAhorroDAO = new MetaAhorroDAO();
     }
 
-    public ExportService(UsuarioDAO usuarioDAO, TransaccionDAO transaccionDAO, MateriaDAO materiaDAO) {
+    public ExportService(UsuarioDAO usuarioDAO, TransaccionDAO transaccionDAO, MateriaDAO materiaDAO, MetaAhorroDAO metaAhorroDAO) {
         this.usuarioDAO = usuarioDAO;
         this.transaccionDAO = transaccionDAO;
         this.materiaDAO = materiaDAO;
+        this.metaAhorroDAO = metaAhorroDAO;
     }
 
-    //Exporta a Excel
+    // Convertir a Excel
     public boolean exportarAExcel(String usuarioId, String rutaArchivo) {
         if (usuarioId == null || rutaArchivo == null || rutaArchivo.trim().isEmpty()) {
             return false;
@@ -38,8 +42,10 @@ public class ExportService {
             usuario = usuarioDAO.buscar(usuarioId);
         }
 
-        List<Transaccion> transacciones = transaccionDAO.listarPorUsuario(usuario != null ? usuario.getId() : usuarioId);
-        List<Materia> materias = materiaDAO.listarPorUsuario(usuario != null ? usuario.getId() : usuarioId);
+        String idReal = (usuario != null) ? usuario.getId() : usuarioId;
+        List<Transaccion> transacciones = transaccionDAO.listarPorUsuario(idReal);
+        List<Materia> materias = materiaDAO.listarPorUsuario(idReal);
+        List<MetaAhorro> metas = metaAhorroDAO.listarPorUsuario(idReal);
 
         File archivo = new File(rutaArchivo);
         File directorioPadre = archivo.getParentFile();
@@ -51,15 +57,14 @@ public class ExportService {
 
         try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivo), StandardCharsets.UTF_8))) {
             escritor.write('\ufeff');
+            escritor.write("sep=,\n");
 
-            // Encabezado reporte
-            escritor.write("REPORTE FINANCIERO DUNAB - EXPORTACIÓN GENERAL");
+            escritor.write("REPORTE FINANCIERO DUNAB - UNIVERSIDAD AUTÓNOMA DE BUCARAMANGA");
             escritor.newLine();
-            escritor.write("Generado: " + java.time.LocalDateTime.now().format(formatoFecha));
+            escritor.write("Fecha de Generación: " + java.time.LocalDateTime.now().format(formatoFecha));
             escritor.newLine();
             escritor.newLine();
 
-            // Datos de Usuario
             escritor.write("=== INFORMACIÓN DEL ESTUDIANTE ===");
             escritor.newLine();
             escritor.write("ID,Usuario,Nombre,Correo,Carrera,Presupuesto Mensual");
@@ -78,7 +83,6 @@ public class ExportService {
             escritor.newLine();
             escritor.newLine();
 
-            // Materias
             escritor.write("=== MATERIAS INSCRITAS ===");
             escritor.newLine();
             escritor.write("ID Materia,Nombre Materia,Créditos,Valor Crédito,Semestre,Costo Total");
@@ -100,7 +104,21 @@ public class ExportService {
             escritor.newLine();
             escritor.newLine();
 
-            // Transacciones
+            escritor.write("=== METAS DE AHORRO ===");
+            escritor.newLine();
+            escritor.write("ID Meta,Nombre Meta,Valor Objetivo,Valor Actual,Progreso");
+            escritor.newLine();
+            for (MetaAhorro meta : metas) {
+                escritor.write(String.format("\"%s\",\"%s\",%.2f,%.2f,%.1f%%",
+                        escaparCsv(meta.getId()),
+                        escaparCsv(meta.getNombreMeta()),
+                        meta.getValorObjetivo(),
+                        meta.getValorActual(),
+                        meta.getProgresoPorcentaje()));
+                escritor.newLine();
+            }
+            escritor.newLine();
+
             escritor.write("=== HISTORIAL DE TRANSACCIONES ===");
             escritor.newLine();
             escritor.write("ID Transacción,Fecha y Hora,Tipo,Categoría,Descripción,Semestre,Monto");
@@ -145,7 +163,7 @@ public class ExportService {
         }
     }
 
-    // Exporta a PDF
+    // Convertir a PDF
     public boolean exportarAPDF(String usuarioId, String rutaArchivo) {
         if (usuarioId == null || rutaArchivo == null || rutaArchivo.trim().isEmpty()) {
             return false;
@@ -156,8 +174,9 @@ public class ExportService {
             usuario = usuarioDAO.buscar(usuarioId);
         }
 
-        List<Transaccion> transacciones = transaccionDAO.listarPorUsuario(usuario != null ? usuario.getId() : usuarioId);
-        List<Materia> materias = materiaDAO.listarPorUsuario(usuario != null ? usuario.getId() : usuarioId);
+        String idReal = (usuario != null) ? usuario.getId() : usuarioId;
+        List<Transaccion> transacciones = transaccionDAO.listarPorUsuario(idReal);
+        List<Materia> materias = materiaDAO.listarPorUsuario(idReal);
 
         File archivo = new File(rutaArchivo);
         File directorioPadre = archivo.getParentFile();
@@ -187,7 +206,6 @@ public class ExportService {
         streamContenido.append(String.format("(Carrera: %s | Presupuesto Mensual: $%.2f) Tj\n", sanitizarPdf(carreraEstudiante), presupuesto));
         streamContenido.append("0 -24 Td\n");
 
-        // Resumen
         streamContenido.append("/F1 12 Tf\n");
         streamContenido.append("(1. RESUMEN DE MATERIAS ACADEMICAS) Tj\n");
         streamContenido.append("0 -16 Td\n");
@@ -210,7 +228,6 @@ public class ExportService {
         streamContenido.append(String.format("(Costo Total Proyectado Materias: $%.2f) Tj\n", totalMaterias));
         streamContenido.append("0 -24 Td\n");
 
-        // Transacciones
         streamContenido.append("/F1 12 Tf\n");
         streamContenido.append("(2. ULTIMOS MOVIMIENTOS Y TRANSACCIONES) Tj\n");
         streamContenido.append("0 -16 Td\n");
@@ -256,28 +273,24 @@ public class ExportService {
             out.write(hBytes);
             bytesEscritos += hBytes.length;
 
-            // Catalogo
             offsets.add(bytesEscritos);
             String obj1 = "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n";
             byte[] b1 = obj1.getBytes(StandardCharsets.US_ASCII);
             out.write(b1);
             bytesEscritos += b1.length;
 
-            // Paginas
             offsets.add(bytesEscritos);
             String obj2 = "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n";
             byte[] b2 = obj2.getBytes(StandardCharsets.US_ASCII);
             out.write(b2);
             bytesEscritos += b2.length;
 
-            // Pagina
             offsets.add(bytesEscritos);
             String obj3 = "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n";
             byte[] b3 = obj3.getBytes(StandardCharsets.US_ASCII);
             out.write(b3);
             bytesEscritos += b3.length;
 
-            // Contenidos
             offsets.add(bytesEscritos);
             String obj4Inicio = "4 0 obj\n<< /Length " + streamBytes.length + " >>\nstream\n";
             byte[] b4Inicio = obj4Inicio.getBytes(StandardCharsets.US_ASCII);
@@ -288,14 +301,12 @@ public class ExportService {
             out.write(b4Fin);
             bytesEscritos += b4Inicio.length + streamBytes.length + b4Fin.length;
 
-            // Letra
             offsets.add(bytesEscritos);
             String obj5 = "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n";
             byte[] b5 = obj5.getBytes(StandardCharsets.US_ASCII);
             out.write(b5);
             bytesEscritos += b5.length;
 
-            // Tabla
             long xrefOffset = bytesEscritos;
             StringBuilder xref = new StringBuilder();
             xref.append("xref\n");
@@ -326,7 +337,6 @@ public class ExportService {
 
     private String sanitizarPdf(String texto) {
         if (texto == null) return "";
-        // solo texto para el pdf
         return texto.replace("\\", "\\\\")
                     .replace("(", "\\(")
                     .replace(")", "\\)")

@@ -11,7 +11,7 @@ public class Materia implements Serializable {
     private String nombre;
     private int creditos;
     private double valorPorCredito;
-    private int semestreIndex; // Rango: 1 a 4
+    private int semestreIndex;
 
     public Materia() {
         this.id = UUID.randomUUID().toString();
