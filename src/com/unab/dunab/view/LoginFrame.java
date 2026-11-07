@@ -5,161 +5,286 @@ import com.unab.dunab.view.theme.Tema;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class LoginFrame extends JFrame {
+
     private Autenticacion controladorAutenticacion;
+
     private JTextField campoUsuario;
     private JPasswordField campoContrasena;
-    
-    private JPanel panelPrincipal, panelFormulario, panelCentral, panelBotones, panelAlternadorTema;
-    private JLabel etiquetaUsuario, etiquetaContrasena, etiquetaIniciarSesion;
-    private JButton botonIniciarSesion, botonRegistrar, botonAlternarTema;
+    private JButton botonAlternarTema;
+    private JPanel panelPrincipal;
+    private JPanel panelIzquierdo;
+    private JPanel panelDerecho;
+    private JPanel formulario;
+    private JLabel titulo;
+    private JLabel texto;
+    private JLabel etiquetaUsuario;
+    private JLabel etiquetaContrasena;
+    private JLabel preguntaRegistro;
+    private JButton botonIngresar;
+    private JButton botonRegistro;
 
     public LoginFrame(Autenticacion controlador) {
         this.controladorAutenticacion = controlador;
 
-        setTitle("DUNAB - Iniciar Sesión");
+        setTitle("DUNAB - Iniciar sesión");
+        setSize(950, 600);
+        setMinimumSize(new Dimension(800, 500));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        
-        panelPrincipal = new JPanel(new BorderLayout());
+        setLocationRelativeTo(null);
+        setLayout(new BorderLayout());
 
-        panelCentral = new JPanel(new GridBagLayout());
-        
-        panelFormulario = new JPanel();
-        panelFormulario.setLayout(new BoxLayout(panelFormulario, BoxLayout.Y_AXIS));
-        panelFormulario.setPreferredSize(new Dimension(420, 480));
+        crearInterfaz();
+    }
 
-        etiquetaIniciarSesion = new JLabel("Iniciar Sesión");
-        etiquetaIniciarSesion.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        etiquetaIniciarSesion.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panelFormulario.add(etiquetaIniciarSesion);
-        panelFormulario.add(Box.createRigidArea(new Dimension(0, 40)));
+    private void crearInterfaz() {
+        panelPrincipal = new JPanel(new GridLayout(1, 2));
+        panelPrincipal.setBackground(Tema.getColorDeFondo());
 
-        etiquetaUsuario = new JLabel("Nombre de Usuario");
-        etiquetaUsuario.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        etiquetaUsuario.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panelFormulario.add(etiquetaUsuario);
-        panelFormulario.add(Box.createRigidArea(new Dimension(0, 5)));
+        // Lado izquierdo: presentación
+        panelIzquierdo = new JPanel(new GridBagLayout());
+        panelIzquierdo.setOpaque(true);
+        panelIzquierdo.setBackground(new Color(48, 32, 82));
+
+        JPanel panelContenidoIzquierda = new JPanel();
+        panelContenidoIzquierda.setLayout(new BoxLayout(panelContenidoIzquierda, BoxLayout.Y_AXIS));
+        panelContenidoIzquierda.setOpaque(false);
+
+        JLabel tituloLogo = new JLabel("DUNAB");
+        tituloLogo.setFont(new Font("Arial", Font.BOLD, 46));
+        tituloLogo.setForeground(Color.WHITE);
+        tituloLogo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel subtitulo = new JLabel("Tu espacio universitario");
+        subtitulo.setFont(new Font("Arial", Font.PLAIN, 18));
+        subtitulo.setForeground(Color.WHITE);
+        subtitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel descripcion = new JLabel(
+            "<html><div style='text-align:center;'>"
+            + "Organiza tu experiencia universitaria<br>"
+            + "y administra tu información desde<br>"
+            + "un solo lugar."
+            + "</div></html>"
+        );
+        descripcion.setFont(new Font("Arial", Font.PLAIN, 15));
+        descripcion.setForeground(new Color(230, 225, 240));
+        descripcion.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panelContenidoIzquierda.add(tituloLogo);
+        panelContenidoIzquierda.add(Box.createVerticalStrut(15));
+        panelContenidoIzquierda.add(subtitulo);
+        panelContenidoIzquierda.add(Box.createVerticalStrut(30));
+        panelContenidoIzquierda.add(descripcion);
+
+        GridBagConstraints gbcIzq = new GridBagConstraints();
+        gbcIzq.gridx = 0;
+        gbcIzq.gridy = 0;
+        gbcIzq.anchor = GridBagConstraints.CENTER;
+        panelIzquierdo.add(panelContenidoIzquierda, gbcIzq);
+
+        // Lado derecho: formulario (Todo perfectamente CENTRADO)
+        panelDerecho = new JPanel(new GridBagLayout());
+        panelDerecho.setOpaque(true);
+        panelDerecho.setBackground(Tema.getColorDeFondo());
+
+        formulario = new JPanel();
+        formulario.setLayout(new BoxLayout(formulario, BoxLayout.Y_AXIS));
+        formulario.setBackground(Tema.obtenerColorPanel());
+        formulario.setBorder(new EmptyBorder(30, 40, 30, 40));
+        formulario.setPreferredSize(new Dimension(410, 520));
+
+        // Botón de alternar tema alineado a la derecha arriba del formulario
+        botonAlternarTema = new JButton(Tema.ModoOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro");
+        botonAlternarTema.setFont(new Font("Arial", Font.BOLD, 12));
+        botonAlternarTema.setForeground(Tema.MORADO);
+        botonAlternarTema.setBackground(Tema.ModoOscuro ? new Color(60, 60, 60) : new Color(240, 235, 250));
+        botonAlternarTema.setFocusPainted(false);
+        botonAlternarTema.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Tema.MORADO, 1, true),
+            new EmptyBorder(6, 12, 6, 12)
+        ));
+        botonAlternarTema.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botonAlternarTema.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        botonAlternarTema.setMaximumSize(new Dimension(140, 34));
+        botonAlternarTema.addActionListener(e -> alternarTema());
+
+        titulo = new JLabel("¡Bienvenido!");
+        titulo.setFont(new Font("Arial", Font.BOLD, 32));
+        titulo.setForeground(Tema.MORADO);
+        titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        texto = new JLabel("Inicia sesión en tu cuenta");
+        texto.setFont(new Font("Arial", Font.PLAIN, 14));
+        texto.setForeground(Color.GRAY);
+        texto.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        etiquetaUsuario = new JLabel("Usuario");
+        etiquetaUsuario.setFont(new Font("Arial", Font.BOLD, 14));
+        etiquetaUsuario.setForeground(Tema.obtenerColorTexto());
+        etiquetaUsuario.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         campoUsuario = new JTextField();
-        campoUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        campoUsuario.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        panelFormulario.add(campoUsuario);
-        panelFormulario.add(Box.createRigidArea(new Dimension(0, 25)));
+        campoUsuario.setFont(new Font("Arial", Font.PLAIN, 15));
+        campoUsuario.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        campoUsuario.setAlignmentX(Component.CENTER_ALIGNMENT);
+        campoUsuario.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Tema.GRIS),
+            new EmptyBorder(8, 12, 8, 12)
+        ));
 
         etiquetaContrasena = new JLabel("Contraseña");
-        etiquetaContrasena.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        etiquetaContrasena.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panelFormulario.add(etiquetaContrasena);
-        panelFormulario.add(Box.createRigidArea(new Dimension(0, 5)));
+        etiquetaContrasena.setFont(new Font("Arial", Font.BOLD, 14));
+        etiquetaContrasena.setForeground(Tema.obtenerColorTexto());
+        etiquetaContrasena.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         campoContrasena = new JPasswordField();
-        campoContrasena.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        campoContrasena.setFont(new Font("Segoe UI", Font.PLAIN, 15));
-        panelFormulario.add(campoContrasena);
-        panelFormulario.add(Box.createRigidArea(new Dimension(0, 40)));
+        campoContrasena.setFont(new Font("Arial", Font.PLAIN, 15));
+        campoContrasena.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        campoContrasena.setAlignmentX(Component.CENTER_ALIGNMENT);
+        campoContrasena.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Tema.GRIS),
+            new EmptyBorder(8, 12, 8, 12)
+        ));
 
-        panelBotones = new JPanel(new GridLayout(2, 1, 0, 15));
-        panelBotones.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
+        botonIngresar = new JButton("Iniciar sesión");
+        botonIngresar.setFont(new Font("Arial", Font.BOLD, 16));
+        botonIngresar.setBackground(Tema.NARANJA);
+        botonIngresar.setForeground(Color.WHITE);
+        botonIngresar.setFocusPainted(false);
+        botonIngresar.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botonIngresar.setAlignmentX(Component.CENTER_ALIGNMENT);
+        botonIngresar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        botonIngresar.setPreferredSize(new Dimension(0, 50));
 
-        botonIniciarSesion = new JButton("Iniciar Sesión");
-        botonIniciarSesion.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        botonIniciarSesion.setFocusPainted(false);
-        botonIniciarSesion.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botonIniciarSesion.addActionListener(e -> iniciarSesion());
-        panelBotones.add(botonIniciarSesion);
+        botonIngresar.addActionListener(e -> iniciarSesion());
 
-        botonRegistrar = new JButton("Crear Cuenta Nueva");
-        botonRegistrar.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        botonRegistrar.setFocusPainted(false);
-        botonRegistrar.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botonRegistrar.addActionListener(e -> abrirRegistro());
-        panelBotones.add(botonRegistrar);
+        preguntaRegistro = new JLabel("¿Todavía no tienes una cuenta?");
+        preguntaRegistro.setFont(new Font("Arial", Font.PLAIN, 13));
+        preguntaRegistro.setForeground(Color.GRAY);
+        preguntaRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        panelFormulario.add(panelBotones);
-        
-        panelCentral.add(panelFormulario);
-        panelPrincipal.add(panelCentral, BorderLayout.CENTER);
+        botonRegistro = new JButton("Crear una cuenta");
+        botonRegistro.setFont(new Font("Arial", Font.BOLD, 14));
+        botonRegistro.setForeground(Tema.MORADO);
+        botonRegistro.setBackground(Tema.obtenerColorPanel());
+        botonRegistro.setBorderPainted(false);
+        botonRegistro.setFocusPainted(false);
+        botonRegistro.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        botonRegistro.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        botonAlternarTema = new JButton("Modo Oscuro");
-        botonAlternarTema.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        botonAlternarTema.setFocusPainted(false);
-        botonAlternarTema.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        botonAlternarTema.addActionListener(e -> alternarTema());
-        
-        panelAlternadorTema = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 15));
-        panelAlternadorTema.setBorder(new EmptyBorder(10, 10, 30, 30));
-        panelAlternadorTema.setOpaque(false);
-        panelAlternadorTema.add(botonAlternarTema);
-        
-        panelPrincipal.add(panelAlternadorTema, BorderLayout.SOUTH);
+        botonRegistro.addActionListener(e -> abrirRegistro());
 
-        add(panelPrincipal);
-        
-        actualizarColores();
+        // Ensamblar formulario de manera armónica
+        formulario.add(botonAlternarTema);
+        formulario.add(Box.createVerticalStrut(10));
+        formulario.add(titulo);
+        formulario.add(Box.createVerticalStrut(5));
+        formulario.add(texto);
+        formulario.add(Box.createVerticalStrut(20));
+
+        formulario.add(etiquetaUsuario);
+        formulario.add(Box.createVerticalStrut(6));
+        formulario.add(campoUsuario);
+        formulario.add(Box.createVerticalStrut(15));
+
+        formulario.add(etiquetaContrasena);
+        formulario.add(Box.createVerticalStrut(6));
+        formulario.add(campoContrasena);
+        formulario.add(Box.createVerticalStrut(25));
+
+        formulario.add(botonIngresar);
+        formulario.add(Box.createVerticalStrut(18));
+
+        formulario.add(preguntaRegistro);
+        formulario.add(Box.createVerticalStrut(5));
+        formulario.add(botonRegistro);
+
+        GridBagConstraints gbcDer = new GridBagConstraints();
+        gbcDer.gridx = 0;
+        gbcDer.gridy = 0;
+        gbcDer.anchor = GridBagConstraints.CENTER;
+        panelDerecho.add(formulario, gbcDer);
+
+        panelPrincipal.add(panelIzquierdo);
+        panelPrincipal.add(panelDerecho);
+
+        add(panelPrincipal, BorderLayout.CENTER);
+
+        getRootPane().setDefaultButton(botonIngresar);
     }
-    
+
     private void alternarTema() {
         Tema.ModoOscuro = !Tema.ModoOscuro;
-        botonAlternarTema.setText(Tema.ModoOscuro ? "Modo Claro" : "Modo Oscuro");
+        actualizarEstilosTema();
         actualizarColores();
+    }
+
+    private void actualizarEstilosTema() {
+        botonAlternarTema.setText(Tema.ModoOscuro ? "☀️ Modo Claro" : "🌙 Modo Oscuro");
+        botonAlternarTema.setBackground(Tema.ModoOscuro ? new Color(60, 60, 60) : new Color(240, 235, 250));
+        botonAlternarTema.setForeground(Tema.ModoOscuro ? Color.WHITE : Tema.MORADO);
     }
 
     private void actualizarColores() {
         panelPrincipal.setBackground(Tema.getColorDeFondo());
-        panelCentral.setBackground(Tema.getColorDeFondo());
-        
-        panelFormulario.setBackground(Tema.obtenerColorPanel());
-        panelBotones.setBackground(Tema.obtenerColorPanel());
+        panelDerecho.setBackground(Tema.getColorDeFondo());
+        formulario.setBackground(Tema.obtenerColorPanel());
         
         etiquetaUsuario.setForeground(Tema.obtenerColorTexto());
         etiquetaContrasena.setForeground(Tema.obtenerColorTexto());
-        etiquetaIniciarSesion.setForeground(Tema.obtenerColorTexto()); 
         
-        campoUsuario.setBackground(Tema.getColorDeFondo());
-        campoUsuario.setForeground(Tema.obtenerColorTexto());
-        campoUsuario.setCaretColor(Tema.obtenerColorTexto());
-        campoUsuario.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Tema.ModoOscuro ? new Color(80, 80, 80) : new Color(200, 200, 200)),
-            BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
+        botonRegistro.setBackground(Tema.obtenerColorPanel());
         
-        campoContrasena.setBackground(Tema.getColorDeFondo());
-        campoContrasena.setForeground(Tema.obtenerColorTexto());
-        campoContrasena.setCaretColor(Tema.obtenerColorTexto());
-        campoContrasena.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(Tema.ModoOscuro ? new Color(80, 80, 80) : new Color(200, 200, 200)),
-            BorderFactory.createEmptyBorder(5, 10, 5, 10)
-        ));
-
-        Tema.aplicarEstiloBoton(botonIniciarSesion, Tema.getColorDeBoton(), Color.WHITE);
-        Tema.aplicarEstiloBoton(botonRegistrar, Tema.getColorDeBotonRegistro(), Color.WHITE);
-        Tema.aplicarEstiloBoton(botonAlternarTema, Tema.obtenerColorBotonSecundario(), Tema.obtenerColorTexto());
-        
-        panelFormulario.setBorder(BorderFactory.createCompoundBorder(
-            new LineBorder(Tema.ModoOscuro ? new Color(60, 60, 60) : new Color(220, 220, 220), 1, true),
-            new EmptyBorder(50, 60, 50, 60)
-        ));
+        SwingUtilities.updateComponentTreeUI(this);
     }
 
     private void iniciarSesion() {
-        String usuarioTexto = campoUsuario.getText();
+        String usuarioTexto = campoUsuario.getText().trim();
         String contrasenaTexto = new String(campoContrasena.getPassword());
 
+        if (usuarioTexto.isEmpty() || contrasenaTexto.isEmpty()) {
+            JOptionPane.showMessageDialog(
+                this,
+                "Por favor, completa todos los campos.",
+                "Campos vacíos",
+                JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+
+        // Si quieres forzar la entrada para probar el dashboard, cambia temporalmente por: (true || controladorAutenticacion.iniciarSesion(...))
         if (controladorAutenticacion.iniciarSesion(usuarioTexto, contrasenaTexto)) {
-            JOptionPane.showMessageDialog(this, 
-                "¡Bienvenido, " + usuarioTexto + "!", 
-                "Acceso Concedido", 
-                JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "¡Bienvenido a DUNAB!",
+                "Inicio de sesión exitoso",
+                JOptionPane.INFORMATION_MESSAGE
+            );
+
+            try {
+                DashboardFrame dashboard = new DashboardFrame(usuarioTexto);
+                dashboard.setVisible(true);
+                this.dispose();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Error al abrir el Dashboard:\n" + ex.getMessage(),
+                    "Error crítico",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
+
         } else {
-            JOptionPane.showMessageDialog(this, 
-                "Usuario o contraseña incorrectos.", 
-                "Error de Acceso", 
-                JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(
+                this,
+                "El usuario o la contraseña son incorrectos.\n(Asegúrate de registrarte primero si no tienes cuenta).",
+                "Error de inicio de sesión",
+                JOptionPane.ERROR_MESSAGE
+            );
         }
     }
 
