@@ -1021,7 +1021,9 @@ public class DashboardFrame extends JFrame {
     }
 
     private void actualizarComponentesRecursivo(Container container) {
-        container.setBackground(Tema.getColorDeFondo());
+        if (container instanceof JPanel) {
+            container.setBackground(Tema.getColorDeFondo());
+        }
         for (Component c : container.getComponents()) {
             if (c instanceof JPanel) {
                 JPanel jp = (JPanel) c;
@@ -1057,7 +1059,7 @@ public class DashboardFrame extends JFrame {
             } else if (c instanceof JComboBox) {
                 Tema.aplicarEstiloCombo((JComboBox<?>) c);
             }
-            if (c instanceof Container) {
+            if (c instanceof Container && !(c instanceof AbstractButton)) {
                 actualizarComponentesRecursivo((Container) c);
             }
         }
