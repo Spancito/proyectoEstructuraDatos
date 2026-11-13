@@ -1,0 +1,218 @@
+\documentclass[utf8]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{spanish}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\geometry{a4paper, left=2.5cm, right=2.5cm, top=2.5cm, bottom=2.5cm}
+
+\title{Estructura del Proyecto DUNAB \\ Análisis Arquitectónico Completo}
+\author{Documentación Técnica Generada Automatizada}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section*{1. Visión General del Proyecto}
+
+\subsection*{Propósito de la Aplicación}
+DUNAB es una aplicación de escritorio en Java diseñada para ayudar a los estudiantes de la Universidad Autónoma de Bucaramanga (UNAB) a organizar sus finanzas personales y académicas. El sistema permite a los estudiantes registrar ingresos y gastos, definirse presupuestos mensuales, crear metas de ahorro, y calcular el costo de sus materias académicas basándose en el número de créditos y el valor por crédito. La aplicación funciona como un prototipo funcional con persistencia local basada en archivos CSV.
+
+\subsection*{Stack Tecnológico}
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Lenguaje:} Java 17 (programación orientada a objetos)
+    \item \textbf{Interfaz de Usuario:} Swing (JFrame, JTable, JComboBox, JTextField, JPasswordField)
+    \item \textbf{Almacenamiento:} Archivos CSV con formato serializado (persistencia local)
+    \item \textbf{Informes:} Exportación a PDF y Excel mediante clase ExportService
+    \item \textbf{Estilizado:} Tema personalizable con modo claro y modo oscuro
+\end{itemize}
+
+\subsection*{Arquitectura Utilizada}
+Arquitectura en capas (layered architecture) con tres capas principales:
+\begin{enumerate}[leftmargin=*, topsep=0pt, itemsep=0.5em]
+    \item \textbf{Capa de Modelo (Model):} Clases Java que representan la información del sistema: \texttt{Usuario}, \texttt{Materia}, \texttt{Transaccion}, \texttt{MetaAhorro}. Todas implementan \texttt{Serializable} y tienen atributos privados con respectivos getters y setters.
+    \item \textbf{Capa de Controlador (Controller):} Controladores que gestionan la lógica de negocio: \texttt{Autenticacion} (login/registro), \texttt{FinanzasController} (operaciones financieras, cálculos, reportes). Actúan como intermediarios entre la vista y el modelo.
+    \item \textbf{Capa de Vista (View):} Componentes Swing para la interfaz gráfica: \texttt{LoginFrame}, \texttt{RegisterFrame}, \texttt{DashboardFrame}, y la clase de temas \texttt{Tema}.
+    \item \textbf{Capa de Persistencia:} Acceso a datos mediante archivos CSV. Cada entidad tiene su propio DAO (\texttt{UsuarioDAO}, \texttt{MateriaDAO}, \texttt{TransaccionDAO}, \texttt{MetaAhorroDAO}) que maneja la lectura y escritura al sistema de archivos.
+    \item \textbf{Capa de Servicios de Exportación:} \texttt{ExportService} permite generar reportes en formato PDF y Excel/CSV con datos del usuario logueado.
+\end{enumerate}
+
+\subsection*{Dependencias Principales}
+\begin{itemize}[leftmargin=*]
+    \item Biblioteca estándar de Java (javax.swing, java.awt, java.io, java.time, java.util)
+    \item Formato PDF nativo mediante generación de stream binario (clase ExportService)
+    \item Formato Excel/CSV con formato separador personalizado (filas con prefijo "sep=,")
+    \item Sin dependencias externas de terceros (librerías JSON, bases de datos, o frameworks de persistencia)
+\end{itemize}
+
+\subsection*{Flujo General de Ejecución}
+\begin{verbatim}
+1. Ejecución de Main.java
+   - Se establece el LookAndFeel del sistema
+   - Se crea una instancia del controlador Autenticacion
+   - Se muestra el LoginFrame como ventana inicial
+
+2. Pantalla de Inicio (LoginFrame)
+   - El usuario ingresa nombre de usuario y contraseña
+   - Al hacer clic en "Iniciar sesión", se valida la credencial contra UsuarioDAO
+   - Si es correcto, se muestra el DashboardFrame con el nombre de la sesión
+
+3. Panel Principal (DashboardFrame)
+   - El usuario puede navegar entre secciones mediante menú lateral:
+     Inicio, Mi perfil, Resumen financiero, Mi progreso, Rankings, Generar reporte
+   - Cada sección muestra componentes específicos (tablas, formularios, gráficos)
+   - El usuario puede agregar/modificar transacciones, materias y metas de ahorro
+   - Cambio de tema (claro/oscuro) afecta colores de toda la interfaz
+
+4. Persistencia
+   - Los datos se guardan automáticamente en archivos CSV en el directorio "data/"
+   - Al iniciar la aplicación, los DAOs cargan los datos existentes
+   - Los cambios se sincronizan inmediatamente al archivo
+
+5. Cierre de Sesión
+   - El usuario puede cerrar sesión desde el menú lateral
+   - Se retorna a la pantalla de login, manteniendo los datos guardados
+\end{verbatim}
+
+\section*{2. Árbol Completo de Directorios y Archivos}
+
+A continuación se presenta la jerarquía completa de todos los archivos y carpetas del repositorio, excluyendo carpetas generadas por el sistema de control de versiones y de construcción:
+
+\begin{verbatim}
+proyectoAnalitica/                                          # Directorio raíz del proyecto
+├── .gitignore                                              # Archivo de configuración git (excluye .class, target, .idea, etc.)
+├── README.md                                               # Descripción básica del proyecto
+├── proyectoAnaliticaDatosPDF.pdf                         # Documento de especificaciones del curso
+│
+├── data/                                                   # Directorio de datos persistencia local
+│   ├── usuarios.csv                                        # Archivo CSV con 7 usuarios registrados (datos iniciales)
+│   ├── materias.csv                                        # Archivo CSV de materias (creado al momento del uso)
+│   ├── transacciones.csv                                   # Archivo CSV de transacciones (creado al momento del uso)
+│   └── metas.csv                                           # Archivo CSV de metas de ahorro (creado al momento del uso)
+│
+└── src/                                                    # Código fuente Java organizado por paquetes
+    └── com/unab/dunab/                                     # Paquete principal del proyecto
+        ├── Main.java                                       # Punto de entrada de la aplicación
+        │
+        ├── model/                                          # Clases modelo (entidades del dominio)
+        │   ├── Usuario.java                                # Modelo de usuario con autenticación y perfil
+        │   ├── Materia.java                                # Modelo de materia académica con cálculo de costo
+        │   ├── MetaAhorro.java                           # Modelo de meta de ahorro con progreso porcentual
+        │   └── Transaccion.java                          # Modelo de transacción financiera (ingreso/gasto)
+        │
+        ├── controller/                                     # Controladores de lógica de negocio
+        │   ├── Autenticacion.java                        # Controlador de autenticación (login/registro)
+        │   └── FinanzasController.java                 # Controlador principal de operaciones financieras
+        │
+        ├── persistence/                                    # Capa de acceso a datos (DAO + Servicios de exportación)
+        │   ├── UsuarioDAO.java                           # DAO para persistencia de usuarios en CSV
+        │   ├── MateriaDAO.java                           # DAO para persistencia de materias en CSV
+        │   ├── TransaccionDAO.java                     # DAO para persistencia de transacciones en CSV
+        │   ├── MetaAhorroDAO.java                      # DAO para persistencia de metas en CSV
+        │   └── ExportService.java                      # Servicios de exportación a PDF y Excel
+        │
+        └── view/                                           # Capa de interfaz gráfica (Swing)
+            ├── Main.java                                   # (Alternate entry point reference)
+            ├── LoginFrame.java                           # Ventana de inicio de sesión
+            ├── RegisterFrame.java                        # Ventana de registro de nueva cuenta
+            ├── DashboardFrame.java                       # Panel principal con todas las secciones
+            └── theme/                                      # Configuración de temas y estilos
+                └── Tema.java                               # Colores, modos claro/oscuro y estilos de componentes
+\end{verbatim}
+
+\section*{3. Descripción Archivo por Archivo}
+
+A continuación se detalla el propósito y rol de cada archivo fuente del proyecto:
+
+\subsection*{Clases Modelo (Entidades del Dominio)}
+
+\begin{longtable}{p{0.15\linewidth}p{0.85\linewidth}}
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endfirsthead
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\textbf{Main.java} & Clase punto de entrada de la aplicación. Contiene el método \texttt{main} que inicializa la aplicación, configura el look and feel del sistema y muestra la ventana de login (LoginFrame) mediante una llamada en el hilo de eventos de Swing (SwingUtilities.invokeLater). No contiene lógica de negocio, solo el arranque de la aplicación. \\ \hline
+\textbf{Usuario.java} & Clase modelo que representa a un usuario del sistema. Almacena identificador único (UUID), nombre de usuario, contraseña, nombre completo, correo electrónico, carrera y presupuesto mensual. Implementa Serializable para persistencia. Sus constructores y métodos get/set son la base para la creación y gestión de cuentas de usuario. Es la entidad base sobre la cual se aseguran todas las demás (transacciones, materias, metas). \\ \hline
+\textbf{Materia.java} & Clase modelo que representa una materia académica inscrita por el estudiante. Atributos: identificador único, identificador de usuario dueño, nombre de la materia, número de créditos, valor por crédito y semestre. Tiene un método computado \texttt{getCostoTotal()} que multiplica créditos por valor por crédito. Esencial para el cálculo del costo académico total y el resumen financiero. \\ \hline
+\textbf{MetaAhorro.java} & Clase modelo que representa una meta de ahorro del usuario. Atributos: identificador único, identificador de usuario, nombre de la meta, valor objetivo y valor actual (ahorrado). Tiene un método \texttt{getProgresoPorcentaje()} que calcula el progreso como porcentaje del objetivo. Permite al estudiante establecer metas financieras y hacer seguimiento de su avance. \\ \hline
+\textbf{Transaccion.java} & Clase modelo que representa una transacción financiera (ingreso o gasto). Atributos: identificador único, identificador de usuario, monto, tipo (INGRESO/GASTO), categoría, descripción, fecha y hora, y semestre. Almacena el registro detallado de todas las operaciones financieras del usuario. Es la entidad sobre la cual se calculan totales, saldos y reportes. \\ \hline
+\end{longtable}
+
+\subsection*{Controladores de Lógica de Negocio}
+
+\begin{longtable}{p{0.15\linewidth}p{0.85\linewidth}}
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endfirsthead
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\textbf{Autenticacion.java} & Controlador responsable de la autenticación de usuarios y registro de nuevas cuentas. Métodos principales: \texttt{iniciarSesion()} (valida credenciales contra el DAO), \texttt{registrarUsuario()} (crea un nuevo usuario y lo persiste), \texttt{getUsuarioActual()} (retorna el usuario logueado), \texttt{obtenerUsuarioPorNombre()} (busca un usuario por su nombre), y \texttt{cerrarSesion()} (limpia el estado de sesión actual). Actúa como intermediario entre la vista de login y el DAO de usuarios. \\ \hline
+\textbf{FinanzasController.java} & Controlador central que opera sobre todas las entidades financieras. Agrupa métodos para: gestión de usuarios (perfil, búsqueda), registro y eliminación de transacciones, cálculo de totales (ingresos, gastos, saldo neto, promedio de gastos), registro y eliminación de materias y metas de ahorro, obtención de listas de datos por usuario, y exportación de reportes (PDF y Excel). Es el cerebro de la aplicación, coordinando la interacción entre los DAOs y las vistas. \\ \hline
+\end{longtable}
+
+\subsection*{Capa de Persistencia (DAOs y Servicios)}
+
+\begin{longtable}{p{0.15\linewidth}p{0.85\linewidth}}
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endfirsthead
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\textbf{UsuarioDAO.java} & Data Access Object para la entidad Usuario. Maneja la persistencia local mediante archivos CSV (usuarios.csv). Implementa métodos de búsqueda (por nombre de usuario o correo), creación (guardar nuevo usuario), actualización y eliminación de registros. Utiliza un mapa en memoria (LinkedHashMap) para mantener el orden de inserción y sincroniza cambios inmediatamente con el archivo CSV. Gestiona el escapado de comas y barras en los datos para evitar corrupción del CSV. \\ \hline
+\textbf{MateriaDAO.java} & Data Access Object para la entidad Materia. Maneja la persistencia local mediante archivos CSV (materias.csv). Implementa métodos de guardado, eliminación, búsqueda por ID y listado por usuario y semestre. Al igual que UsuarioDAO, trabaja con archivos CSV y mantiene un mapa en memoria. Es el puente entre el controlador y el archivo de materias. \\ \hline
+\textbf{TransaccionDAO.java} & Data Access Object para la entidad Transaccion. Maneja la persistencia local mediante archivos CSV (transacciones.csv). Incluye métodos para listado por usuario, obtención de los últimos 20 movimientos, y búsqueda por ID. El CSV incluye fecha/hora, tipo, categoría, descripción y semestre. Mantiene un mapa en memoria y sincroniza cambios al archivo al modificar. \\ \hline
+\textbf{MetaAhorroDAO.java} & Data Access Object para la entidad MetaAhorro. Maneja la persistencia local mediante archivos CSV (metas.csv). Implementa guardado, eliminación, búsqueda por ID y listado por usuario. El CSV incluye nombre de meta, valor objetivo y valor actual. Gestiona el progreso porcentual a través del modelo MetaAhorro. \\ \hline
+\textbf{ExportService.java} & Servicio de utilidad para la generación de reportes. Ofrece dos métodos de exportación:\\
+\begin{itemize}[leftmargin=*, topsep=0pt, itemsep=0.5em]
+    \item \texttt{exportarAExcel(String usuarioId, String rutaArchivo)}: Genera un archivo CSV con formato Excel (con prefijo "sep=," y encabezados formateados). Incluye información del estudiante, materias inscritas, metas de ahorro y historial de transacciones con balance general.
+    \item \texttt{exportarAPDF(String usuarioId, String rutaArchivo)}: Genera un archivo PDF estructurado con stream binario directo. Contiene datos del estudiante, lista de materias (máximo 10), últimos 15 movimientos financieros y balance general (ingresos, gastos, saldo neto). La estructura PDF es manual (etiquetas PostScript dentro de un contenedor PDF-1.4).
+\end{itemize} \\ \hline
+\end{longtable}
+
+\subsection*{Capa de Interfaz Gráfica (Vistas Swing)}
+
+\begin{longtable}{p{0.15\linewidth}p{0.85\linewidth}}
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endfirsthead
+\hline
+\textbf{Archivo} & \textbf{Descripción y Rol} \\ \hline
+\endhead
+\hline
+\endfoot
+\hline
+\endlastfoot
+\textbf{LoginFrame.java} & Ventana de diálogo para el inicio de sesión y registro de cuentas. Contiene campos de texto para usuario y contraseña (JPasswordField), botones de acción (ingresar, registro, alternar tema). Es la primera pantalla que ve el usuario al iniciar la aplicación. Controla la transición al DashboardFrame cuando las credenciales son válidas. \\ \hline
+\textbf{RegisterFrame.java} & Ventana de diálogo para el registro de una nueva cuenta de usuario. Solicita nombre de usuario, contraseña y confirmación de contraseña. Valida que las contraseñas coincidan antes de llamar al controlador de autenticación para crear el usuario. Al registrarse exitosamente, cierra esta ventana y retorna al login. \\ \hline
+\textbf{DashboardFrame.java} & Panel principal de la aplicación que muestra la interfaz completa después del login. Contiene un menú lateral navegable, una barra superior con información del usuario y botón de cambio de tema, y un área central con tarjetas métricas y pestañas para cada sección:\\
+\begin{itemize}[leftmargin=*, topsep=0pt, itemsep=0.5em]
+    \item \textbf{Inicio:} Tarjetas de saldo neto, total gastos, créditos académicos, y un gráfico de barras financiero.
+    \item \textbf{Mi perfil:} Formulario para editar nombre, correo, carrera y presupuesto mensual.
+    \item \textbf{Resumen financiero:} Formulario para agregar nuevas transacciones, tabla de historial con búsqueda y filtros implícitos, y botones de eliminar.
+    \item \textbf{Mi progreso:} Gestión de materias académicas y metas de ahorro con tablas asociadas.
+    \item \textbf{Rankings:} Cuadro de honor con posiciones fijas (datos de ejemplo de estudiantes del curso).
+    \item \textbf{Generar reporte:} Botones para exportar el informe a PDF o Excel/CSV.
+\end{itemize} \\ \hline
+\textbf{Tema.java} & Clase de utilidad que define colores estáticos y modos de tema (claro/oscuro). Contiene colores institucionales (Morado UNAB, Naranja UNAB), colores para texto, fondos, bordes y componentes interactivos (botones, inputs, tablas). Métodos de estilo aplican estos colores a componentes Swing (JTextField, JComboBox, JTable, JButton). La variable estática \texttt{ModoOscuro} alterna el aspecto general de la aplicación. \\ \hline
+\end{longtable}
+
+\end{document}
