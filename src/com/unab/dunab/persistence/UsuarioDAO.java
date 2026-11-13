@@ -4,6 +4,9 @@ import com.unab.dunab.model.Usuario;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class UsuarioDAO {
@@ -12,36 +15,9 @@ public class UsuarioDAO {
 
     public UsuarioDAO() {
         this.baseDatosUsuarios = new LinkedHashMap<>();
-        this.archivoDatos = resolverArchivoDatos("usuarios.csv");
+        this.archivoDatos = RutasDatos.obtenerArchivo("usuarios.csv");
         asegurarDirectorioYArchivo();
         cargarDesdeArchivo();
-    }
-
-    private File resolverArchivoDatos(String nombreArchivo) {
-        File f1 = new File("data", nombreArchivo);
-        if (f1.exists()) {
-            return f1;
-        }
-        File f2 = new File("../../../data", nombreArchivo);
-        if (f2.exists()) {
-            return f2;
-        }
-        File f3 = new File("../../data", nombreArchivo);
-        if (f3.exists()) {
-            return f3;
-        }
-        File dirActual = new File(".").getAbsoluteFile();
-        while (dirActual != null) {
-            File carpetaData = new File(dirActual, "data");
-            if (carpetaData.exists() && carpetaData.isDirectory()) {
-                File candidato = new File(carpetaData, nombreArchivo);
-                if (candidato.exists()) {
-                    return candidato;
-                }
-            }
-            dirActual = dirActual.getParentFile();
-        }
-        return f1;
     }
 
     private void asegurarDirectorioYArchivo() {
@@ -80,14 +56,36 @@ public class UsuarioDAO {
         }
     }
 
-    private synchronized void sincronizarArchivo() {
-        try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivoDatos), StandardCharsets.UTF_8))) {
-            for (Usuario u : baseDatosUsuarios.values()) {
-                escritor.write(serializarUsuario(u));
-                escritor.newLine();
+    private synchronized boolean sincronizarArchivo() {
+        File carpeta = archivoDatos.getAbsoluteFile().getParentFile();
+        File temporal = null;
+        try {
+            if (carpeta != null && !carpeta.exists()) {
+                Files.createDirectories(carpeta.toPath());
             }
+            temporal = File.createTempFile(archivoDatos.getName() + ".", ".tmp", carpeta);
+            try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(temporal), StandardCharsets.UTF_8))) {
+                for (Usuario u : baseDatosUsuarios.values()) {
+                    escritor.write(serializarUsuario(u));
+                    escritor.newLine();
+                }
+                escritor.flush();
+            }
+            try {
+                Files.move(temporal.toPath(), archivoDatos.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporal.toPath(), archivoDatos.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            temporal = null;
+            return true;
         } catch (IOException e) {
             System.err.println("Error al guardar usuarios en archivo: " + e.getMessage());
+            return false;
+        } finally {
+            if (temporal != null && temporal.exists()) {
+                temporal.delete();
+            }
         }
     }
 
@@ -98,7 +96,8 @@ public class UsuarioDAO {
                 escapar(u.getNombre()) + "," +
                 escapar(u.getCorreo()) + "," +
                 escapar(u.getCarrera()) + "," +
-                u.getPresupuestoMensual();
+                u.getPresupuestoMensual() + "," +
+                u.getPuntosDunab();
     }
 
     private Usuario deserializarUsuario(String linea) {
@@ -119,8 +118,14 @@ public class UsuarioDAO {
                 presupuesto = Double.parseDouble(partes[6]);
             } catch (NumberFormatException ignored) {}
         }
+        double puntosDunab = Usuario.PUNTOS_INICIALES;
+        if (partes.length > 7) {
+            try {
+                puntosDunab = Double.parseDouble(partes[7]);
+            } catch (NumberFormatException ignored) {}
+        }
 
-        return new Usuario(id, usuario, contrasena, nombre, correo, carrera, presupuesto);
+        return new Usuario(id, usuario, contrasena, nombre, correo, carrera, presupuesto, puntosDunab);
     }
 
     private String escapar(String valor) {
@@ -141,7 +146,10 @@ public class UsuarioDAO {
             return false;
         }
         baseDatosUsuarios.put(usuario.getUsuario(), usuario);
-        sincronizarArchivo();
+        if (!sincronizarArchivo()) {
+            baseDatosUsuarios.remove(usuario.getUsuario());
+            return false;
+        }
         return true;
     }
 
@@ -149,8 +157,39 @@ public class UsuarioDAO {
         if (usuario == null || usuario.getUsuario() == null || !baseDatosUsuarios.containsKey(usuario.getUsuario())) {
             return false;
         }
-        baseDatosUsuarios.put(usuario.getUsuario(), usuario);
-        sincronizarArchivo();
+        Usuario anterior = baseDatosUsuarios.put(usuario.getUsuario(), usuario);
+        if (!sincronizarArchivo()) {
+            baseDatosUsuarios.put(usuario.getUsuario(), anterior);
+            return false;
+        }
+        return true;
+    }
+
+    public synchronized boolean transferirPuntos(String idOrigen, String idDestino, double puntos) {
+        if (idOrigen == null || idDestino == null || idOrigen.equals(idDestino)
+                || Double.isNaN(puntos) || Double.isInfinite(puntos) || puntos <= 0) {
+            return false;
+        }
+
+        Usuario origen = buscarPorId(idOrigen);
+        Usuario destino = buscarPorId(idDestino);
+        if (origen == null || destino == null || origen == destino) {
+            return false;
+        }
+        if (origen.getPuntosDunab() < puntos) {
+            return false;
+        }
+
+        double saldoOrigen = origen.getPuntosDunab();
+        double saldoDestino = destino.getPuntosDunab();
+        origen.setPuntosDunab(saldoOrigen - puntos);
+        destino.setPuntosDunab(saldoDestino + puntos);
+
+        if (!sincronizarArchivo()) {
+            origen.setPuntosDunab(saldoOrigen);
+            destino.setPuntosDunab(saldoDestino);
+            return false;
+        }
         return true;
     }
 

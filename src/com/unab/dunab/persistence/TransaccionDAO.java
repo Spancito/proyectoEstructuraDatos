@@ -4,6 +4,9 @@ import com.unab.dunab.model.Transaccion;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -15,36 +18,9 @@ public class TransaccionDAO {
 
     public TransaccionDAO() {
         this.baseDatosTransacciones = new LinkedHashMap<>();
-        this.archivoDatos = resolverArchivoDatos("transacciones.csv");
+        this.archivoDatos = RutasDatos.obtenerArchivo("transacciones.csv");
         asegurarDirectorioYArchivo();
         cargarDesdeArchivo();
-    }
-
-    private File resolverArchivoDatos(String nombreArchivo) {
-        File f1 = new File("data", nombreArchivo);
-        if (f1.exists()) {
-            return f1;
-        }
-        File f2 = new File("../../../data", nombreArchivo);
-        if (f2.exists()) {
-            return f2;
-        }
-        File f3 = new File("../../data", nombreArchivo);
-        if (f3.exists()) {
-            return f3;
-        }
-        File dirActual = new File(".").getAbsoluteFile();
-        while (dirActual != null) {
-            File carpetaData = new File(dirActual, "data");
-            if (carpetaData.exists() && carpetaData.isDirectory()) {
-                File candidato = new File(carpetaData, nombreArchivo);
-                if (candidato.exists()) {
-                    return candidato;
-                }
-            }
-            dirActual = dirActual.getParentFile();
-        }
-        return f1;
     }
 
     private void asegurarDirectorioYArchivo() {
@@ -83,14 +59,36 @@ public class TransaccionDAO {
         }
     }
 
-    private synchronized void sincronizarArchivo() {
-        try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(archivoDatos), StandardCharsets.UTF_8))) {
-            for (Transaccion t : baseDatosTransacciones.values()) {
-                escritor.write(serializarTransaccion(t));
-                escritor.newLine();
+    private synchronized boolean sincronizarArchivo() {
+        File carpeta = archivoDatos.getAbsoluteFile().getParentFile();
+        File temporal = null;
+        try {
+            if (carpeta != null && !carpeta.exists()) {
+                Files.createDirectories(carpeta.toPath());
             }
+            temporal = File.createTempFile(archivoDatos.getName() + ".", ".tmp", carpeta);
+            try (BufferedWriter escritor = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(temporal), StandardCharsets.UTF_8))) {
+                for (Transaccion t : baseDatosTransacciones.values()) {
+                    escritor.write(serializarTransaccion(t));
+                    escritor.newLine();
+                }
+                escritor.flush();
+            }
+            try {
+                Files.move(temporal.toPath(), archivoDatos.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(temporal.toPath(), archivoDatos.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+            temporal = null;
+            return true;
         } catch (IOException e) {
             System.err.println("Error al guardar transacciones en archivo: " + e.getMessage());
+            return false;
+        } finally {
+            if (temporal != null && temporal.exists()) {
+                temporal.delete();
+            }
         }
     }
 
@@ -149,8 +147,36 @@ public class TransaccionDAO {
         if (transaccion == null || transaccion.getId() == null) {
             return false;
         }
-        baseDatosTransacciones.put(transaccion.getId(), transaccion);
-        sincronizarArchivo();
+        Transaccion anterior = baseDatosTransacciones.put(transaccion.getId(), transaccion);
+        if (!sincronizarArchivo()) {
+            restaurar(transaccion.getId(), anterior);
+            return false;
+        }
+        return true;
+    }
+
+    public synchronized boolean guardarTodas(List<Transaccion> transacciones) {
+        if (transacciones == null || transacciones.isEmpty()) {
+            return false;
+        }
+
+        Map<String, Transaccion> anteriores = new LinkedHashMap<>();
+        for (Transaccion transaccion : transacciones) {
+            if (transaccion == null || transaccion.getId() == null) {
+                for (Map.Entry<String, Transaccion> entry : anteriores.entrySet()) {
+                    restaurar(entry.getKey(), entry.getValue());
+                }
+                return false;
+            }
+            anteriores.put(transaccion.getId(), baseDatosTransacciones.put(transaccion.getId(), transaccion));
+        }
+
+        if (!sincronizarArchivo()) {
+            for (Map.Entry<String, Transaccion> entry : anteriores.entrySet()) {
+                restaurar(entry.getKey(), entry.getValue());
+            }
+            return false;
+        }
         return true;
     }
 
@@ -158,8 +184,11 @@ public class TransaccionDAO {
         if (transaccion == null || transaccion.getId() == null || !baseDatosTransacciones.containsKey(transaccion.getId())) {
             return false;
         }
-        baseDatosTransacciones.put(transaccion.getId(), transaccion);
-        sincronizarArchivo();
+        Transaccion anterior = baseDatosTransacciones.put(transaccion.getId(), transaccion);
+        if (!sincronizarArchivo()) {
+            restaurar(transaccion.getId(), anterior);
+            return false;
+        }
         return true;
     }
 
@@ -167,9 +196,22 @@ public class TransaccionDAO {
         if (id == null || !baseDatosTransacciones.containsKey(id)) {
             return false;
         }
-        baseDatosTransacciones.remove(id);
-        sincronizarArchivo();
+        Transaccion anterior = baseDatosTransacciones.remove(id);
+        if (!sincronizarArchivo()) {
+            if (anterior != null) {
+                baseDatosTransacciones.put(id, anterior);
+            }
+            return false;
+        }
         return true;
+    }
+
+    private void restaurar(String id, Transaccion anterior) {
+        if (anterior == null) {
+            baseDatosTransacciones.remove(id);
+        } else {
+            baseDatosTransacciones.put(id, anterior);
+        }
     }
 
     public synchronized Transaccion buscarPorId(String id) {

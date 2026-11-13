@@ -11,7 +11,10 @@ import com.unab.dunab.view.theme.Tema;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -19,6 +22,7 @@ import java.io.File;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class DashboardFrame extends JFrame {
 
@@ -48,6 +52,15 @@ public class DashboardFrame extends JFrame {
     private JLabel etiquetaSaldoNeto;
     private JLabel etiquetaTotalGastos;
     private JLabel etiquetaCreditosTotales;
+    private JLabel etiquetaPuntosDunab;
+    private JLabel etiquetaPuntosTransferencia;
+    private JLabel etiquetaPresupuestoDefinido;
+    private JLabel etiquetaGastosMesActual;
+    private JLabel etiquetaPresupuestoDisponible;
+    private JProgressBar barraPresupuesto;
+    private JComboBox<Integer> comboMesesPromedio;
+    private JLabel etiquetaPromedioGastos;
+    private JTextField campoBusquedaTransacciones;
     private List<JPanel> tarjetasMetricas;
 
     private JComboBox<String> comboTipoTransaccion;
@@ -69,7 +82,7 @@ public class DashboardFrame extends JFrame {
         setLayout(new BorderLayout());
 
         secciones = new String[]{
-            "Inicio", "Mi perfil", "Resumen financiero", "Mi progreso", "Rankings", "Generar reporte"
+            "Inicio", "Mi perfil", "Resumen financiero", "Mi progreso", "Rankings", "Transferir Puntos", "Generar reporte"
         };
 
         crearMenuLateral();
@@ -268,9 +281,10 @@ public class DashboardFrame extends JFrame {
         switch (nombre) {
             case "Inicio": return "Panel general con estado financiero actual, avance de materias y balance.";
             case "Mi perfil": return "Consulta y edita tus datos institucionales y presupuesto mensual.";
-            case "Resumen financiero": return "Registro y consulta de ingresos y gastos de tu periodo académico.";
+            case "Resumen financiero": return "Registro, búsqueda y control de ingresos, gastos y presupuesto mensual.";
             case "Mi progreso": return "Gestión y cálculo de materias inscritas y metas de ahorro.";
             case "Rankings": return "Cuadro de honor y clasificación de estudiantes destacados por rendimiento académico.";
+            case "Transferir Puntos": return "Envío de puntos DUNAB entre estudiantes de la comunidad universitaria.";
             case "Generar reporte": return "Exportación oficial de balances, historial y materias a PDF y Excel.";
             default: return "Módulo de gestión del sistema DUNAB.";
         }
@@ -287,7 +301,7 @@ public class DashboardFrame extends JFrame {
                 panelInicio.setLayout(new BoxLayout(panelInicio, BoxLayout.Y_AXIS));
                 panelInicio.setOpaque(false);
 
-                JPanel metricas = new JPanel(new GridLayout(1, 3, 20, 0));
+                JPanel metricas = new JPanel(new GridLayout(1, 4, 20, 0));
                 metricas.setOpaque(false);
 
                 etiquetaSaldoNeto = new JLabel("$ 0.00");
@@ -299,17 +313,23 @@ public class DashboardFrame extends JFrame {
                 etiquetaCreditosTotales = new JLabel("0 Créditos");
                 etiquetaCreditosTotales.setFont(new Font("SansSerif", Font.BOLD, 24));
 
+                etiquetaPuntosDunab = new JLabel("0.00 pts");
+                etiquetaPuntosDunab.setFont(new Font("SansSerif", Font.BOLD, 24));
+
                 JPanel card1 = crearTarjetaMetricaConComponente("Saldo Neto Actual", etiquetaSaldoNeto, Tema.MORADO_UNAB);
                 JPanel card2 = crearTarjetaMetricaConComponente("Total Gastos Registrados", etiquetaTotalGastos, Tema.NARANJA_UNAB);
                 JPanel card3 = crearTarjetaMetricaConComponente("Créditos Académicos", etiquetaCreditosTotales, Tema.EXITO);
+                JPanel card4 = crearTarjetaMetricaConComponente("Puntos DUNAB", etiquetaPuntosDunab, Tema.MORADO_HOVER);
 
                 tarjetasMetricas.add(card1);
                 tarjetasMetricas.add(card2);
                 tarjetasMetricas.add(card3);
+                tarjetasMetricas.add(card4);
 
                 metricas.add(card1);
                 metricas.add(card2);
                 metricas.add(card3);
+                metricas.add(card4);
                 metricas.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
 
                 PanelGraficoFinanciero grafico = new PanelGraficoFinanciero();
@@ -396,6 +416,60 @@ public class DashboardFrame extends JFrame {
                 JButton botonEliminarTransaccion = new JButton("Eliminar Seleccionado");
                 Tema.aplicarEstiloBotonPrimario(botonEliminarTransaccion, Tema.PELIGRO, new Color(230, 40, 40));
 
+                JPanel panelPresupuesto = new JPanel(new BorderLayout(0, 8));
+                panelPresupuesto.setOpaque(false);
+                panelPresupuesto.setBorder(BorderFactory.createTitledBorder(
+                    BorderFactory.createLineBorder(Tema.obtenerColorBorde(), 1, true),
+                    "Presupuesto Mensual",
+                    TitledBorder.LEFT,
+                    TitledBorder.TOP,
+                    new Font("SansSerif", Font.BOLD, 13),
+                    Tema.MORADO_UNAB
+                ));
+                panelPresupuesto.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+
+                JPanel datosPresupuesto = new JPanel(new GridLayout(1, 3, 15, 0));
+                datosPresupuesto.setOpaque(false);
+
+                etiquetaPresupuestoDefinido = new JLabel("Sin definir");
+                etiquetaGastosMesActual = new JLabel("$ 0.00");
+                etiquetaPresupuestoDisponible = new JLabel("Sin definir");
+
+                datosPresupuesto.add(crearBloquePresupuesto("Presupuesto definido", etiquetaPresupuestoDefinido));
+                datosPresupuesto.add(crearBloquePresupuesto("Total gastado en el mes", etiquetaGastosMesActual));
+                datosPresupuesto.add(crearBloquePresupuesto("Disponible", etiquetaPresupuestoDisponible));
+
+                barraPresupuesto = new JProgressBar(0, 100);
+                barraPresupuesto.setStringPainted(true);
+                barraPresupuesto.setString("Sin presupuesto definido");
+                barraPresupuesto.setPreferredSize(new Dimension(0, 22));
+                barraPresupuesto.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
+                barraPresupuesto.setBorderPainted(false);
+
+                JPanel panelPromedio = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+                panelPromedio.setOpaque(false);
+                panelPromedio.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
+                comboMesesPromedio = new JComboBox<>(new Integer[]{1, 3, 6, 12});
+                comboMesesPromedio.setSelectedItem(6);
+                Tema.aplicarEstiloCombo(comboMesesPromedio);
+                comboMesesPromedio.addActionListener(e -> actualizarDatosGenerales());
+                etiquetaPromedioGastos = new JLabel("$ 0.00 / mes");
+                etiquetaPromedioGastos.setFont(new Font("SansSerif", Font.BOLD, 13));
+                panelPromedio.add(new JLabel("Promedio de gastos:"));
+                panelPromedio.add(comboMesesPromedio);
+                panelPromedio.add(new JLabel("meses"));
+                panelPromedio.add(etiquetaPromedioGastos);
+
+                JPanel barraContenedor = new JPanel();
+                barraContenedor.setLayout(new BoxLayout(barraContenedor, BoxLayout.Y_AXIS));
+                barraContenedor.setOpaque(false);
+                barraContenedor.add(barraPresupuesto);
+                barraContenedor.add(Box.createVerticalStrut(6));
+                barraContenedor.add(panelPromedio);
+
+                panelPresupuesto.add(datosPresupuesto, BorderLayout.CENTER);
+                panelPresupuesto.add(barraContenedor, BorderLayout.SOUTH);
+
                 formularioTransaccion.add(new JLabel("Tipo:"));
                 formularioTransaccion.add(comboTipoTransaccion);
                 formularioTransaccion.add(new JLabel("Monto:"));
@@ -419,6 +493,45 @@ public class DashboardFrame extends JFrame {
                 tablaTransacciones = new JTable(modeloTablaTransacciones);
                 Tema.aplicarEstiloTabla(tablaTransacciones);
 
+                TableRowSorter<DefaultTableModel> sorterTransacciones = new TableRowSorter<>(modeloTablaTransacciones);
+                tablaTransacciones.setRowSorter(sorterTransacciones);
+
+                JPanel panelBusqueda = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+                panelBusqueda.setOpaque(false);
+                panelBusqueda.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+                JLabel etiquetaBusqueda = new JLabel("Buscar por descripción:");
+                etiquetaBusqueda.setFont(new Font("SansSerif", Font.BOLD, 13));
+                campoBusquedaTransacciones = new JTextField(28);
+                campoBusquedaTransacciones.setPreferredSize(new Dimension(320, 32));
+                Tema.aplicarEstiloInput(campoBusquedaTransacciones);
+                campoBusquedaTransacciones.getDocument().addDocumentListener(new DocumentListener() {
+                    private void filtrar() {
+                        String texto = campoBusquedaTransacciones.getText().trim();
+                        if (texto.isEmpty()) {
+                            sorterTransacciones.setRowFilter(null);
+                        } else {
+                            sorterTransacciones.setRowFilter(RowFilter.regexFilter("(?i)" + Pattern.quote(texto), 4));
+                        }
+                    }
+
+                    @Override
+                    public void insertUpdate(DocumentEvent e) {
+                        filtrar();
+                    }
+
+                    @Override
+                    public void removeUpdate(DocumentEvent e) {
+                        filtrar();
+                    }
+
+                    @Override
+                    public void changedUpdate(DocumentEvent e) {
+                        filtrar();
+                    }
+                });
+                panelBusqueda.add(etiquetaBusqueda);
+                panelBusqueda.add(campoBusquedaTransacciones);
+
                 botonAgregarTransaccion.addActionListener(e -> {
                     try {
                         double monto = Double.parseDouble(campoMonto.getText().trim());
@@ -432,12 +545,15 @@ public class DashboardFrame extends JFrame {
                             return;
                         }
 
-                        boolean ok = finanzasController.registrarTransaccion(usuarioNombre, monto, tipo, categoria, descripcion, sem);
-                        if (ok) {
+                        FinanzasController.ResultadoTransaccion resultado = finanzasController.registrarTransaccionConValidacion(
+                                usuarioNombre, monto, tipo, categoria, descripcion, sem);
+                        if (resultado.isExitoso()) {
                             campoMonto.setText("");
                             campoCategoria.setText("");
                             campoDescripcion.setText("");
                             actualizarDatosGenerales();
+                        } else {
+                            JOptionPane.showMessageDialog(this, resultado.getMensaje(), "Movimiento rechazado", JOptionPane.WARNING_MESSAGE);
                         }
                     } catch (NumberFormatException ex) {
                         JOptionPane.showMessageDialog(this, "Monto inválido. Ingrese un número válido.", "Error", JOptionPane.WARNING_MESSAGE);
@@ -445,9 +561,10 @@ public class DashboardFrame extends JFrame {
                 });
 
                 botonEliminarTransaccion.addActionListener(e -> {
-                    int fila = tablaTransacciones.getSelectedRow();
-                    if (fila >= 0) {
-                        String id = (String) modeloTablaTransacciones.getValueAt(fila, 0);
+                    int filaVista = tablaTransacciones.getSelectedRow();
+                    if (filaVista >= 0) {
+                        int filaModelo = tablaTransacciones.convertRowIndexToModel(filaVista);
+                        String id = (String) modeloTablaTransacciones.getValueAt(filaModelo, 0);
                         finanzasController.eliminarTransaccion(id);
                         actualizarDatosGenerales();
                     } else {
@@ -455,7 +572,17 @@ public class DashboardFrame extends JFrame {
                     }
                 });
 
-                panelFinanzas.add(formularioTransaccion, BorderLayout.NORTH);
+                JPanel panelSuperior = new JPanel();
+                panelSuperior.setLayout(new BoxLayout(panelSuperior, BoxLayout.Y_AXIS));
+                panelSuperior.setOpaque(false);
+                formularioTransaccion.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+                panelSuperior.add(formularioTransaccion);
+                panelSuperior.add(Box.createVerticalStrut(10));
+                panelSuperior.add(panelPresupuesto);
+                panelSuperior.add(Box.createVerticalStrut(10));
+                panelSuperior.add(panelBusqueda);
+
+                panelFinanzas.add(panelSuperior, BorderLayout.NORTH);
                 JScrollPane scrollTrans = new JScrollPane(tablaTransacciones);
                 scrollTrans.setOpaque(true);
                 scrollTrans.getViewport().setOpaque(true);
@@ -682,6 +809,77 @@ public class DashboardFrame extends JFrame {
                 tarjeta.add(panelRankings, BorderLayout.CENTER);
                 break;
 
+            case "Transferir Puntos":
+                JPanel panelTransferencia = new JPanel();
+                panelTransferencia.setLayout(new BoxLayout(panelTransferencia, BoxLayout.Y_AXIS));
+                panelTransferencia.setOpaque(false);
+
+                etiquetaPuntosTransferencia = new JLabel("Saldo disponible: 0.00 puntos DUNAB");
+                etiquetaPuntosTransferencia.setFont(new Font("SansSerif", Font.BOLD, 18));
+                etiquetaPuntosTransferencia.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                JLabel ayudaTransferencia = new JLabel("Ingresa el usuario, correo institucional o ID del destinatario.");
+                ayudaTransferencia.setFont(new Font("SansSerif", Font.PLAIN, 13));
+                ayudaTransferencia.setForeground(Tema.obtenerColorTextoSecundario());
+                ayudaTransferencia.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                JTextField campoDestinatario = new JTextField(20);
+                JTextField campoPuntos = new JTextField(10);
+                JTextField campoConcepto = new JTextField(20);
+
+                JPanel filaDestinatario = crearFilaFormulario("Destinatario:", campoDestinatario);
+                JPanel filaPuntos = crearFilaFormulario("Cantidad de puntos:", campoPuntos);
+                JPanel filaConcepto = crearFilaFormulario("Concepto (opcional):", campoConcepto);
+
+                JButton botonTransferir = new JButton("Transferir Puntos");
+                Tema.aplicarEstiloBotonPrimario(botonTransferir, Tema.NARANJA_UNAB, Tema.NARANJA_HOVER);
+                botonTransferir.setPreferredSize(new Dimension(220, 42));
+                botonTransferir.setMaximumSize(new Dimension(220, 42));
+                botonTransferir.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                botonTransferir.addActionListener(e -> {
+                    double puntos;
+                    try {
+                        puntos = Double.parseDouble(campoPuntos.getText().trim());
+                    } catch (NumberFormatException ex) {
+                        JOptionPane.showMessageDialog(this,
+                                "Ingresa una cantidad válida de puntos.",
+                                "Datos inválidos", JOptionPane.WARNING_MESSAGE);
+                        campoPuntos.requestFocus();
+                        return;
+                    }
+
+                    FinanzasController.ResultadoTransferencia resultado = finanzasController.transferirPuntos(
+                            usuarioNombre, campoDestinatario.getText(), puntos, campoConcepto.getText());
+
+                    if (resultado.isExitoso()) {
+                        JOptionPane.showMessageDialog(this, resultado.getMensaje(),
+                                "Transferencia exitosa", JOptionPane.INFORMATION_MESSAGE);
+                        campoDestinatario.setText("");
+                        campoPuntos.setText("");
+                        campoConcepto.setText("");
+                        actualizarDatosGenerales();
+                    } else {
+                        JOptionPane.showMessageDialog(this, resultado.getMensaje(),
+                                "No se pudo transferir", JOptionPane.WARNING_MESSAGE);
+                    }
+                });
+
+                panelTransferencia.add(etiquetaPuntosTransferencia);
+                panelTransferencia.add(Box.createVerticalStrut(8));
+                panelTransferencia.add(ayudaTransferencia);
+                panelTransferencia.add(Box.createVerticalStrut(20));
+                panelTransferencia.add(filaDestinatario);
+                panelTransferencia.add(Box.createVerticalStrut(12));
+                panelTransferencia.add(filaPuntos);
+                panelTransferencia.add(Box.createVerticalStrut(12));
+                panelTransferencia.add(filaConcepto);
+                panelTransferencia.add(Box.createVerticalStrut(22));
+                panelTransferencia.add(botonTransferir);
+
+                tarjeta.add(panelTransferencia, BorderLayout.NORTH);
+                break;
+
             case "Generar reporte":
                 JPanel panelReporte = new JPanel();
                 panelReporte.setLayout(new BoxLayout(panelReporte, BoxLayout.Y_AXIS));
@@ -810,9 +1008,19 @@ public class DashboardFrame extends JFrame {
     }
 
     private void actualizarDatosGenerales() {
+        Usuario usuarioActual = finanzasController.obtenerUsuario(usuarioNombre);
         double saldo = finanzasController.calcularSaldoNeto(usuarioNombre);
         double gastos = finanzasController.calcularTotalGastos(usuarioNombre);
         int creditos = finanzasController.calcularTotalCreditos(usuarioNombre);
+        double puntosDunab = (usuarioActual != null) ? usuarioActual.getPuntosDunab() : 0.0;
+        double presupuestoMensual = (usuarioActual != null) ? usuarioActual.getPresupuestoMensual() : 0.0;
+        double gastosMesActual = finanzasController.calcularGastosMesActual(usuarioNombre);
+        double presupuestoDisponible = presupuestoMensual - gastosMesActual;
+        int mesesPromedio = 6;
+        if (comboMesesPromedio != null && comboMesesPromedio.getSelectedItem() instanceof Integer) {
+            mesesPromedio = (Integer) comboMesesPromedio.getSelectedItem();
+        }
+        double promedioGastos = finanzasController.calcularPromedioMensualGastos(usuarioNombre, mesesPromedio);
 
         if (etiquetaSaldoNeto != null) {
             etiquetaSaldoNeto.setText(String.format("$ %,.2f", saldo));
@@ -825,6 +1033,50 @@ public class DashboardFrame extends JFrame {
         if (etiquetaCreditosTotales != null) {
             etiquetaCreditosTotales.setText(creditos + " Créditos");
             etiquetaCreditosTotales.setForeground(Tema.ModoOscuro ? Tema.TEXTO_CLARO : Tema.MORADO_UNAB);
+        }
+        if (etiquetaPuntosDunab != null) {
+            etiquetaPuntosDunab.setText(String.format("%,.2f pts", puntosDunab));
+            etiquetaPuntosDunab.setForeground(Tema.NARANJA_UNAB);
+        }
+        if (etiquetaPuntosTransferencia != null) {
+            etiquetaPuntosTransferencia.setText("Saldo disponible: " + String.format("%,.2f", puntosDunab) + " puntos DUNAB");
+            etiquetaPuntosTransferencia.setForeground(Tema.NARANJA_UNAB);
+        }
+        if (etiquetaPresupuestoDefinido != null) {
+            etiquetaPresupuestoDefinido.setText(presupuestoMensual > 0 ? String.format("$ %,.2f", presupuestoMensual) : "Sin definir");
+            etiquetaPresupuestoDefinido.setForeground(Tema.ModoOscuro ? Tema.TEXTO_CLARO : Tema.MORADO_UNAB);
+        }
+        if (etiquetaGastosMesActual != null) {
+            etiquetaGastosMesActual.setText(String.format("$ %,.2f", gastosMesActual));
+            etiquetaGastosMesActual.setForeground(Tema.NARANJA_UNAB);
+        }
+        if (etiquetaPresupuestoDisponible != null) {
+            etiquetaPresupuestoDisponible.setText(presupuestoMensual > 0 ? String.format("$ %,.2f", presupuestoDisponible) : "Sin definir");
+            etiquetaPresupuestoDisponible.setForeground(presupuestoDisponible >= 0
+                    ? (Tema.ModoOscuro ? new Color(130, 230, 150) : Tema.EXITO) : Tema.PELIGRO);
+        }
+        if (etiquetaPromedioGastos != null) {
+            etiquetaPromedioGastos.setText(String.format("$ %,.2f / mes", promedioGastos));
+            etiquetaPromedioGastos.setForeground(Tema.NARANJA_UNAB);
+        }
+        if (barraPresupuesto != null) {
+            barraPresupuesto.setBackground(Tema.obtenerColorBorde());
+            if (presupuestoMensual > 0) {
+                int porcentaje = (int) Math.round((gastosMesActual / presupuestoMensual) * 100.0);
+                barraPresupuesto.setValue(Math.max(0, Math.min(100, porcentaje)));
+                barraPresupuesto.setString(porcentaje + "% utilizado");
+                if (porcentaje >= 100) {
+                    barraPresupuesto.setForeground(Tema.PELIGRO);
+                } else if (porcentaje >= 80) {
+                    barraPresupuesto.setForeground(Tema.NARANJA_UNAB);
+                } else {
+                    barraPresupuesto.setForeground(Tema.EXITO);
+                }
+            } else {
+                barraPresupuesto.setValue(0);
+                barraPresupuesto.setString("Sin presupuesto definido");
+                barraPresupuesto.setForeground(Tema.NARANJA_UNAB);
+            }
         }
 
         if (modeloTablaTransacciones != null) {
@@ -878,6 +1130,23 @@ public class DashboardFrame extends JFrame {
 
         p.add(t);
         p.add(Box.createVerticalStrut(6));
+        p.add(valor);
+        return p;
+    }
+
+    private JPanel crearBloquePresupuesto(String titulo, JLabel valor) {
+        JPanel p = new JPanel();
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setOpaque(false);
+
+        JLabel etiquetaTitulo = new JLabel(titulo);
+        etiquetaTitulo.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        etiquetaTitulo.setForeground(Tema.obtenerColorTextoSecundario());
+
+        valor.setFont(new Font("SansSerif", Font.BOLD, 20));
+
+        p.add(etiquetaTitulo);
+        p.add(Box.createVerticalStrut(4));
         p.add(valor);
         return p;
     }
@@ -1010,6 +1279,7 @@ public class DashboardFrame extends JFrame {
         if (comboTipoTransaccion != null) Tema.aplicarEstiloCombo(comboTipoTransaccion);
         if (comboSemestreTransaccion != null) Tema.aplicarEstiloCombo(comboSemestreTransaccion);
         if (comboSemestreMateria != null) Tema.aplicarEstiloCombo(comboSemestreMateria);
+        if (comboMesesPromedio != null) Tema.aplicarEstiloCombo(comboMesesPromedio);
 
         if (tablaTransacciones != null) Tema.aplicarEstiloTabla(tablaTransacciones);
         if (tablaMaterias != null) Tema.aplicarEstiloTabla(tablaMaterias);

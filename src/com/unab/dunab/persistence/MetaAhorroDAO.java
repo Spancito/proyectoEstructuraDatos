@@ -12,36 +12,9 @@ public class MetaAhorroDAO {
 
     public MetaAhorroDAO() {
         this.baseDatosMetas = new LinkedHashMap<>();
-        this.archivoDatos = resolverArchivoDatos("metas.csv");
+        this.archivoDatos = RutasDatos.obtenerArchivo("metas.csv");
         asegurarDirectorioYArchivo();
         cargarDesdeArchivo();
-    }
-
-    private File resolverArchivoDatos(String nombreArchivo) {
-        File f1 = new File("data", nombreArchivo);
-        if (f1.exists()) {
-            return f1;
-        }
-        File f2 = new File("../../../data", nombreArchivo);
-        if (f2.exists()) {
-            return f2;
-        }
-        File f3 = new File("../../data", nombreArchivo);
-        if (f3.exists()) {
-            return f3;
-        }
-        File dirActual = new File(".").getAbsoluteFile();
-        while (dirActual != null) {
-            File carpetaData = new File(dirActual, "data");
-            if (carpetaData.exists() && carpetaData.isDirectory()) {
-                File candidato = new File(carpetaData, nombreArchivo);
-                if (candidato.exists()) {
-                    return candidato;
-                }
-            }
-            dirActual = dirActual.getParentFile();
-        }
-        return f1;
     }
 
     private void asegurarDirectorioYArchivo() {
